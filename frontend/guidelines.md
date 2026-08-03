@@ -1,6 +1,6 @@
 # Frontend Development Guidelines
 
-Aturan pengembangan frontend React + Vite untuk Healthcare Queue Scheduling Engine.
+Aturan pengembangan frontend React + Vite + Chakra UI untuk Healthcare Queue Scheduling Engine.
 
 ## Struktur folder
 
@@ -10,22 +10,24 @@ src/
 ├── pages/        # satu file per halaman/route
 ├── services/     # modul pemanggilan API (axios)
 ├── hooks/        # custom hooks (useQueue, useDoctors, ...)
+├── theme.js      # Chakra theme (warna, font, ukuran — lihat styles.md)
 ├── App.jsx       # routing + layout utama
-└── main.jsx      # entry point
+└── main.jsx      # entry point (bungkus ChakraProvider)
 ```
 
 ## Penamaan
 
 - Komponen: **PascalCase** (`QueueTable`, `StatusBadge`)
 - File service/hook: **camelCase** (`queueService.js`, `useQueue.js`)
-- Folder komponen: satu folder per komponen hanya jika punya banyak file pendukung; komponen sederhana cukup satu file.
 - Nama file mengikuti nama export utama.
 
 ## Komponen
 
-- Komponen **presentasional** (hanya render props) vs **container** (punya logika/state). Utamakan komponen presentasional dan pindahkan logika ke custom hook.
+- Utamakan komponen Chakra UI bawaan (`Box`, `Flex`, `Table`, `Badge`, `Button`, `Input`, `Modal`, `useToast`, ...). Jangan bikin sendiri kalau Chakra sudah punya.
+- Komponen **presentasional** (hanya render props) vs **container** (punya logika/state). Utamakan presentasional, pindahkan logika ke custom hook.
 - Satu tanggung jawab per komponen.
 - Jangan panggil API langsung dari komponen; lewat `services/`.
+- Warna/font jangan di-hardcode pakai nilai mentah — selalu pakai token dari theme (mis. `color="brand.500"`), lihat `styles.md`.
 
 ## State management
 
@@ -64,9 +66,9 @@ export async function recallPatient(id) {
 }
 ```
 
-- Semua pemanggilan async di-hanandling dengan try/catch (atau wrapper `asyncHandler`).
-- Tampilkan error state di UI, jangan biarkan error mentah.
-- Selalu loading state saat request berjalan.
+- Semua pemanggilan async di-handling dengan try/catch (atau wrapper `asyncHandler`).
+- Tampilkan error dengan `useToast` dari Chakra, jangan biarkan error mentah.
+- Selalu loading state saat request berjalan (mis. `Button isLoading`).
 
 ## Gaya kode
 

@@ -47,6 +47,29 @@ Body yang dikirim pakai `avgConsultTime` (camelCase), namun respons mengembalika
 | -- | ----------- | ---------------- | ---------------- | ---- |
 | 1  | Dr. Sari    | 15               | 11:00            | -    |
 
+Contoh render dengan Chakra:
+
+```jsx
+<Table>
+  <Thead>
+    <Tr>
+      <Th>Nama Dokter</Th>
+      <Th>Konsultasi (mnt)</Th>
+      <Th>Tersedia Kembali</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {doctors.map((d) => (
+      <Tr key={d.id}>
+        <Td>{d.name}</Td>
+        <Td>{d.avg_consult_time}</Td>
+        <Td>{new Date(d.available_at).toLocaleTimeString()}</Td>
+      </Tr>
+    ))}
+  </Tbody>
+</Table>
+```
+
 ## 2. Queue
 
 **Endpoint:** `GET /api/queue`, `POST /api/queue`, `PATCH /api/queue/:id/skip`, `PATCH /api/queue/:id/recall`
@@ -132,7 +155,44 @@ Error jika id tidak ditemukan:
 | 1  | Andi        | waiting   | 10 mnt   | Dr. Sari (11:00)  | 10:05     |
 | 2  | Budi        | skipped   | -        | -                 | 10:06     |
 
-Kolom status ditampilkan sebagai badge berwarna (lihat `styles.md`).
+Contoh render dengan Chakra:
+
+```jsx
+<Table>
+  <Thead>
+    <Tr>
+      <Th>Nama Pasien</Th>
+      <Th>Status</Th>
+      <Th>Estimasi</Th>
+      <Th>Dokter Ditugaskan</Th>
+      <Th>Aksi</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {queue.map((p) => (
+      <Tr key={p.id}>
+        <Td>{p.patient_name}</Td>
+        <Td><StatusBadge status={p.status} /></Td>
+        <Td>{p.estimatedTime} mnt</Td>
+        <Td>{p.assignedDoctor.name}</Td>
+        <Td>
+          {p.status === 'waiting' ? (
+            <Button size="sm" colorScheme="red" onClick={() => onSkip(p.id)}>
+              Skip
+            </Button>
+          ) : (
+            <Button size="sm" colorScheme="green" onClick={() => onRecall(p.id)}>
+              Recall
+            </Button>
+          )}
+        </Td>
+      </Tr>
+    ))}
+  </Tbody>
+</Table>
+```
+
+`StatusBadge` memakai `Badge` Chakra dengan colorScheme sesuai `styles.md`.
 
 ### Aksi per baris queue
 
@@ -143,12 +203,12 @@ Kolom status ditampilkan sebagai badge berwarna (lihat `styles.md`).
 
 ## 3. Map status
 
-| Status   | Arti                              | Badge color (styles.md) |
-| -------- | --------------------------------- | ----------------------- |
-| waiting  | Sedang menunggu giliran           | warning                 |
-| skipped  | Dilewati sementara                | danger                  |
-| called   | Sudah dipanggil ke dokter         | info                    |
-| done     | Konsultasi selesai                | success                 |
+| Status   | Arti                              | Chakra colorScheme (styles.md) |
+| -------- | --------------------------------- | ------------------------------ |
+| waiting  | Sedang menunggu giliran           | `orange`                       |
+| skipped  | Dilewati sementara                | `red`                          |
+| called   | Sudah dipanggil ke dokter         | `gray`                         |
+| done     | Konsultasi selesai                | `green`                        |
 
 ## Format & konvensi untuk frontend
 

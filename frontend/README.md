@@ -1,8 +1,8 @@
 # Healthcare Queue Scheduling Engine - Frontend
 
-Frontend SPA untuk Healthcare Queue Scheduling Engine, dibangun dengan **React + Vite**.
+Frontend SPA untuk Healthcare Queue Scheduling Engine, dibangun dengan **React + Vite + Chakra UI**.
 
-Berinteraksi dengan backend Express di `backend/` melalui REST API. Lihat `tables.md` untuk kontrak data dan `styles.md` untuk panduan tampilan.
+Berinteraksi dengan backend Express di `backend/` melalui REST API. Lihat `tables.md` untuk kontrak data dan `styles.md` untuk tema Chakra.
 
 ## Prasyarat
 
@@ -18,8 +18,8 @@ cd frontend
 npm create vite@latest . -- --template react
 npm install
 
-# dependency tambahan
-npm install axios
+# dependency tambahan: axios + Chakra UI
+npm install axios @chakra-ui/react @emotion/react @emotion/styled framer-motion
 ```
 
 ## Menjalankan
@@ -29,6 +29,19 @@ npm run dev
 ```
 
 Secara default berjalan di `http://localhost:5173`. Backend di `http://localhost:5000`.
+
+Bungkus aplikasi dengan `ChakraProvider` di `main.jsx`:
+
+```jsx
+import { ChakraProvider } from '@chakra-ui/react';
+import theme from './theme';
+
+createRoot(document.getElementById('root')).render(
+  <ChakraProvider theme={theme}>
+    <App />
+  </ChakraProvider>
+);
+```
 
 Untuk memakai Vite proxy ke backend, tambahkan di `vite.config.js`:
 
@@ -70,15 +83,16 @@ const API = import.meta.env.VITE_API_BASE_URL;
 ```
 frontend/
 ├── src/
-│   ├── components/       # komponen reusable (Table, Badge, Button, ...)
+│   ├── components/       # komponen reusable (QueueTable, StatusBadge, ...)
 │   ├── pages/            # halaman (Doctors, Queue, ...)
 │   ├── services/         # pemanggilan API
 │   ├── hooks/            # custom hooks
+│   ├── theme.js          # Chakra theme (lihat styles.md)
 │   ├── App.jsx
 │   └── main.jsx
 ├── README.md
 ├── guidelines.md         # aturan pengembangan
-├── styles.md             # design system
+├── styles.md             # Chakra theme / design system
 └── tables.md             # struktur data & tabel tampilan
 ```
 
