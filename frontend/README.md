@@ -72,28 +72,31 @@ const API = import.meta.env.VITE_API_BASE_URL;
 
 ## Fitur yang direncanakan
 
+- Dashboard ringkasan (jumlah menunggu, skip, dokter, estimasi)
 - Daftar dokter + tambah dokter
 - Tampilan antrian pasien dengan estimasi waktu
 - Join queue (tambah pasien)
 - Skip & recall pasien
 - Indikator status pasien (waiting / skipped / called / done)
+- Layout navbar + sidebar + footer (AppLayout)
 
 ## Struktur proyek (target)
 
 ```
 frontend/
 ├── src/
-│   ├── components/       # komponen reusable (QueueTable, StatusBadge, ...)
-│   ├── pages/            # halaman (Doctors, Queue, ...)
-│   ├── services/         # pemanggilan API
-│   ├── hooks/            # custom hooks
-│   ├── theme.js          # Chakra theme (lihat styles.md)
-│   ├── App.jsx
+│   ├── layouts/           # AppLayout (navbar + sidebar + footer)
+│   ├── components/        # komponen reusable (QueueTable, StatusBadge, ...)
+│   ├── pages/             # halaman (Dashboard, Queue, Doctors)
+│   ├── services/          # pemanggilan API
+│   ├── hooks/             # custom hooks
+│   ├── theme.js           # Chakra theme (lihat styles.md)
+│   ├── App.jsx            # routing (react-router-dom)
 │   └── main.jsx
 ├── README.md
-├── guidelines.md         # aturan pengembangan
-├── styles.md             # Chakra theme / design system
-└── tables.md             # struktur data & tabel tampilan
+├── guidelines.md          # aturan pengembangan
+├── styles.md              # Chakra theme / design system
+└── tables.md              # struktur data & tabel tampilan
 ```
 
 ## Endpoint backend yang dipakai
