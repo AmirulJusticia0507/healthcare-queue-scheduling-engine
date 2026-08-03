@@ -1,5 +1,3 @@
-import { Skeleton, Table } from '@chakra-ui/react'
-
 function formatAvailable(availableAt) {
   if (!availableAt) return '-'
   return new Date(availableAt).toLocaleTimeString('id-ID', {
@@ -11,41 +9,58 @@ function formatAvailable(availableAt) {
 function DoctorsTable({ doctors, loading }) {
   if (loading) {
     return (
-      <Table.Root size="sm">
-        <Skeleton height="40px" mb="2" />
-        <Skeleton height="40px" mb="2" />
-        <Skeleton height="40px" />
-      </Table.Root>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-500 border-b border-gray-200">
+              <th className="px-4 py-2 font-medium">Nama Dokter</th>
+              <th className="px-4 py-2 font-medium">Konsultasi (mnt)</th>
+              <th className="px-4 py-2 font-medium">Tersedia Kembali</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3].map((n) => (
+              <tr key={n} className="border-b border-gray-100 last:border-0">
+                <td className="px-4 py-2"><div className="h-4 bg-gray-200 animate-pulse rounded" /></td>
+                <td className="px-4 py-2"><div className="h-4 bg-gray-200 animate-pulse rounded" /></td>
+                <td className="px-4 py-2"><div className="h-4 bg-gray-200 animate-pulse rounded" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     )
   }
 
   return (
-    <Table.Root size="sm" variant="line" overflowX="auto">
-      <Table.Header>
-        <Table.Row>
-          <Table.ColumnHeader>Nama Dokter</Table.ColumnHeader>
-          <Table.ColumnHeader>Konsultasi (mnt)</Table.ColumnHeader>
-          <Table.ColumnHeader>Tersedia Kembali</Table.ColumnHeader>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {doctors.length === 0 ? (
-          <Table.Row>
-            <Table.Cell colSpan={3} textAlign="center" color="gray.500">
-              Belum ada dokter
-            </Table.Cell>
-          </Table.Row>
-        ) : (
-          doctors.map((d) => (
-            <Table.Row key={d.id}>
-              <Table.Cell fontWeight="medium">{d.name}</Table.Cell>
-              <Table.Cell>{d.avg_consult_time}</Table.Cell>
-              <Table.Cell>{formatAvailable(d.available_at)}</Table.Cell>
-            </Table.Row>
-          ))
-        )}
-      </Table.Body>
-    </Table.Root>
+    <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-gray-500 border-b border-gray-200">
+            <th className="px-4 py-2 font-medium">Nama Dokter</th>
+            <th className="px-4 py-2 font-medium">Konsultasi (mnt)</th>
+            <th className="px-4 py-2 font-medium">Tersedia Kembali</th>
+          </tr>
+        </thead>
+        <tbody>
+          {doctors.length === 0 ? (
+            <tr>
+              <td colSpan={3} className="px-4 py-4 text-center text-gray-500">
+                Belum ada dokter
+              </td>
+            </tr>
+          ) : (
+            doctors.map((d) => (
+              <tr key={d.id} className="border-b border-gray-100 last:border-0">
+                <td className="px-4 py-2 font-medium">{d.name}</td>
+                <td className="px-4 py-2">{d.avg_consult_time}</td>
+                <td className="px-4 py-2">{formatAvailable(d.available_at)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }
 

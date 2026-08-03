@@ -1,8 +1,10 @@
-import { Alert, Heading, Stack } from '@chakra-ui/react'
 import { useDoctors } from '../hooks/useDoctors'
 import DoctorsTable from '../components/DoctorsTable'
 import AddDoctorForm from '../components/AddDoctorForm'
-import { toaster } from '../lib/toaster'
+import { pushToast } from '../lib/toast'
+
+const btn =
+  'inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors disabled:opacity-50'
 
 function DoctorsPage() {
   const { doctors, loading, error, createDoctor } = useDoctors()
@@ -10,13 +12,13 @@ function DoctorsPage() {
   const handleCreateDoctor = async (name, avgConsultTime) => {
     try {
       await createDoctor(name, avgConsultTime)
-      toaster.create({
+      pushToast({
         title: 'Dokter Ditambahkan',
         description: `${name} (${avgConsultTime} mnt)`,
         type: 'success',
       })
     } catch (err) {
-      toaster.create({
+      pushToast({
         title: 'Gagal Tambah Dokter',
         description: err.message,
         type: 'error',
@@ -25,17 +27,27 @@ function DoctorsPage() {
   }
 
   return (
-    <Stack spacing="4">
-      <Heading size="md">Daftar Dokter</Heading>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Daftar Dokter</h1>
+        <button
+          onClick={() => window.location.reload()}
+          disabled={loading}
+          className={`${btn} border-gray-300 text-gray-700 hover:bg-gray-100`}
+        >
+          {loading ? 'Memuat...' : 'Muat Ulang'}
+        </button>
+      </div>
+
       {error && (
-        <Alert.Root status="error">
-          <Alert.Indicator />
-          <Alert.Title>{error}</Alert.Title>
-        </Alert.Root>
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-3 py-2">
+          {error}
+        </div>
       )}
+
       <AddDoctorForm onSubmit={handleCreateDoctor} loading={loading} />
       <DoctorsTable doctors={doctors} loading={loading} />
-    </Stack>
+    </div>
   )
 }
 

@@ -1,14 +1,5 @@
-import {
-  Box,
-  Container,
-  Flex,
-  Heading,
-  Link as ChakraLink,
-  Text,
-  Toaster,
-} from '@chakra-ui/react'
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
-import { toaster } from '../lib/toaster'
+import Toasts from '../components/Toasts'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
@@ -18,29 +9,15 @@ const NAV_ITEMS = [
 
 function Navbar() {
   return (
-    <Box bg="brand.600" px="4" py="3" shadow="sm">
-      <Container maxW="6xl" display="flex" alignItems="center" gap="3">
-        <Box
-          bg="white"
-          color="brand.600"
-          borderRadius="md"
-          px="2"
-          py="1"
-          fontWeight="bold"
-          fontSize="sm"
-        >
-          HQ
-        </Box>
-        <Box>
-          <Heading size="sm" color="white" lineHeight="1.2">
-            Healthcare Queue
-          </Heading>
-          <Text fontSize="xs" color="whiteAlpha.800">
-            Sistem Antrian Rumah Sakit
-          </Text>
-        </Box>
-      </Container>
-    </Box>
+    <header className="bg-brand-600 text-white shadow-sm">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="bg-white text-brand-600 rounded-md px-2 py-1 font-bold text-sm">HQ</div>
+        <div>
+          <p className="font-semibold text-sm leading-tight">Healthcare Queue</p>
+          <p className="text-xs text-blue-100">Sistem Antrian Rumah Sakit</p>
+        </div>
+      </div>
+    </header>
   )
 }
 
@@ -48,78 +25,49 @@ function Sidebar() {
   const location = useLocation()
 
   return (
-    <Box
-      as="nav"
-      w={{ base: '100%', md: '220px' }}
-      flexShrink={0}
-      bg="white"
-      borderRight={{ base: 'none', md: '1px solid' }}
-      borderBottom={{ base: '1px solid', md: 'none' }}
-      borderColor="gray.200"
-      p="3"
-      display={{ base: 'flex', md: 'block' }}
-      gap="1"
-      flexWrap="wrap"
-    >
+    <nav className="w-full md:w-56 md:shrink-0 bg-white border-b md:border-b-0 md:border-r border-gray-200 p-3 flex md:flex-col gap-1 flex-wrap">
       {NAV_ITEMS.map((item) => {
         const active =
           item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
-
         return (
-          <ChakraLink
+          <RouterLink
             key={item.path}
-            as={RouterLink}
             to={item.path}
-            display="block"
-            px="3"
-            py="2"
-            borderRadius="md"
-            fontWeight="medium"
-            fontSize="sm"
-            bg={active ? 'brand.50' : 'transparent'}
-            color={active ? 'brand.700' : 'gray.600'}
-            borderLeft={active ? '3px solid' : '3px solid transparent'}
-            borderColor={active ? 'brand.500' : 'transparent'}
-            _hover={{ bg: 'brand.50', color: 'brand.700', textDecoration: 'none' }}
+            className={`px-3 py-2 rounded-md text-sm font-medium border-l-[3px] ${
+              active
+                ? 'bg-brand-50 text-brand-700 border-brand-500'
+                : 'text-gray-600 border-transparent hover:bg-brand-50 hover:text-brand-700'
+            }`}
           >
             {item.label}
-          </ChakraLink>
+          </RouterLink>
         )
       })}
-    </Box>
+    </nav>
   )
 }
 
 function Footer() {
   return (
-    <Box
-      as="footer"
-      bg="white"
-      borderTop="1px solid"
-      borderColor="gray.200"
-      py="4"
-      textAlign="center"
-    >
-      <Text fontSize="sm" color="gray.500">
-        © 2026 Healthcare Queue Scheduling Engine
-      </Text>
-    </Box>
+    <footer className="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500">
+      © 2026 Healthcare Queue Scheduling Engine
+    </footer>
   )
 }
 
 function AppLayout() {
   return (
-    <Flex minH="100vh" direction="column" bg="gray.50">
-      <Toaster toaster={toaster} />
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Toasts />
       <Navbar />
-      <Container maxW="6xl" display="flex" flex="1" p="0" flexDirection={{ base: 'column', md: 'row' }}>
+      <div className="max-w-6xl w-full mx-auto flex-1 flex flex-col md:flex-row">
         <Sidebar />
-        <Box flex="1" p={{ base: 4, md: 6 }} minW="0">
+        <main className="flex-1 p-4 md:p-6 min-w-0">
           <Outlet />
-        </Box>
-      </Container>
+        </main>
+      </div>
       <Footer />
-    </Flex>
+    </div>
   )
 }
 

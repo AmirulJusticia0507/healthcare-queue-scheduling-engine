@@ -2,7 +2,7 @@
 
 Dokumentasi struktur data untuk frontend: apa yang datang dari backend dan bagaimana menampilkannya.
 
-Base URL: `http://localhost:5000/api` (lihat `frontend/README.md`).
+Base URL backend: `http://localhost:5000/api` (di dev lewat Vite proxy jadi `/api/...`).
 
 ## 1. Doctors
 
@@ -22,13 +22,13 @@ Base URL: `http://localhost:5000/api` (lihat `frontend/README.md`).
 ]
 ```
 
-| Field             | Tipe   | Keterangan                              |
-| ----------------- | ------ | --------------------------------------- |
-| id                | number | Primary key                             |
-| name              | string | Nama dokter                             |
-| avg_consult_time  | number | Rata-rata durasi konsultasi (menit)     |
-| available_at      | string | Kapan dokter bebas lagi (ISO 8601)      |
-| created_at        | string | Waktu dibuat (ISO 8601)                 |
+| Field            | Tipe   | Keterangan                              |
+| ---------------- | ------ | --------------------------------------- |
+| id               | number | Primary key                             |
+| name             | string | Nama dokter                             |
+| avg_consult_time | number | Rata-rata durasi konsultasi (menit)     |
+| available_at     | string | Kapan dokter bebas lagi (ISO 8601)      |
+| created_at       | string | Waktu dibuat (ISO 8601)                 |
 
 ### Request POST `/api/doctors`
 
@@ -39,35 +39,37 @@ Base URL: `http://localhost:5000/api` (lihat `frontend/README.md`).
 }
 ```
 
-Body yang dikirim pakai `avgConsultTime` (camelCase), namun respons mengembalikan `avg_consult_time` (snake_case).
+Body pakai `avgConsultTime` (camelCase); respons kembalikan `avg_consult_time` (snake_case).
 
 ### Tabel tampilan (Doctors)
 
-| No | Nama Dokter | Konsultasi (mnt) | Tersedia Kembali | Aksi |
-| -- | ----------- | ---------------- | ---------------- | ---- |
-| 1  | Dr. Sari    | 15               | 11:00            | -    |
+| No | Nama Dokter | Konsultasi (mnt) | Tersedia Kembali |
+| -- | ----------- | ---------------- | ---------------- |
+| 1  | Dr. Sari    | 15               | 11:00            |
 
-Contoh render dengan Chakra:
+Render dengan Tailwind (lihat `DoctorsTable.jsx`):
 
 ```jsx
-<Table.Root size="sm" variant="line">
-  <Table.Header>
-    <Table.Row>
-      <Table.ColumnHeader>Nama Dokter</Table.ColumnHeader>
-      <Table.ColumnHeader>Konsultasi (mnt)</Table.ColumnHeader>
-      <Table.ColumnHeader>Tersedia Kembali</Table.ColumnHeader>
-    </Table.Row>
-  </Table.Header>
-  <Table.Body>
-    {doctors.map((d) => (
-      <Table.Row key={d.id}>
-        <Table.Cell>{d.name}</Table.Cell>
-        <Table.Cell>{d.avg_consult_time}</Table.Cell>
-        <Table.Cell>{new Date(d.available_at).toLocaleTimeString()}</Table.Cell>
-      </Table.Row>
-    ))}
-  </Table.Body>
-</Table.Root>
+<div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+  <table className="w-full text-sm">
+    <thead>
+      <tr className="text-left text-gray-500 border-b border-gray-200">
+        <th className="px-4 py-2 font-medium">Nama Dokter</th>
+        <th className="px-4 py-2 font-medium">Konsultasi (mnt)</th>
+        <th className="px-4 py-2 font-medium">Tersedia Kembali</th>
+      </tr>
+    </thead>
+    <tbody>
+      {doctors.map((d) => (
+        <tr key={d.id} className="border-b border-gray-100 last:border-0">
+          <td className="px-4 py-2 font-medium">{d.name}</td>
+          <td className="px-4 py-2">{d.avg_consult_time}</td>
+          <td className="px-4 py-2">{formatAvailable(d.available_at)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 ```
 
 ## 2. Queue
@@ -94,19 +96,19 @@ Contoh render dengan Chakra:
 ]
 ```
 
-| Field           | Tipe    | Keterangan                                  |
-| --------------- | ------- | ------------------------------------------- |
-| id              | number  | Primary key                                 |
-| patient_name    | string  | Nama pasien                                 |
-| status          | string  | `waiting` \| `skipped` \| `called` \| `done` |
-| joined_at       | string  | Waktu masuk antrian (ISO 8601)              |
-| estimatedTime   | number  | Estimasi tunggu dalam **menit** (dihitung backend) |
-| assignedDoctor  | object  | Dokter yang ditugaskan + kapan bebas        |
-| assignedDoctor.id | number  | Id dokter                                 |
-| assignedDoctor.name | string | Nama dokter                             |
-| assignedDoctor.availableAt | number | Waktu dokter bebas, **timestamp ms** |
+| Field                    | Tipe   | Keterangan                                       |
+| ------------------------ | ------ | ------------------------------------------------ |
+| id                       | number | Primary key                                      |
+| patient_name             | string | Nama pasien                                      |
+| status                   | string | `waiting` \| `skipped` \| `called` \| `done`     |
+| joined_at                | string | Waktu masuk antrian (ISO 8601)                   |
+| estimatedTime            | number | Estimasi tunggu dalam **menit** (dihitung backend) |
+| assignedDoctor           | object | Dokter yang ditugaskan + kapan bebas             |
+| assignedDoctor.id        | number | Id dokter                                        |
+| assignedDoctor.name      | string | Nama dokter                                      |
+| assignedDoctor.availableAt | number | Waktu dokter bebas, **timestamp ms**          |
 
-> Catatan: `assignedDoctor.availableAt` berupa timestamp dalam milidetik. Konversi ke format tampilan: `new Date(availableAt).toLocaleTimeString()`.
+> Catatan: `assignedDoctor.availableAt` berupa timestamp dalam milidetik. Konversi ke tampilan: `new Date(availableAt).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'})`.
 
 ### Request POST `/api/queue`
 
@@ -142,7 +144,7 @@ Mengembalikan entry yang diubah:
 }
 ```
 
-Error jika id tidak ditemukan:
+Error kalau id tidak ditemukan:
 
 ```json
 { "error": "Patient not found" }
@@ -150,69 +152,56 @@ Error jika id tidak ditemukan:
 
 ### Tabel tampilan (Queue)
 
-| No | Nama Pasien | Status    | Estimasi | Dokter Ditugaskan | Join Pada |
-| -- | ----------- | --------- | -------- | ----------------- | --------- |
-| 1  | Andi        | waiting   | 10 mnt   | Dr. Sari (11:00)  | 10:05     |
-| 2  | Budi        | skipped   | -        | -                 | 10:06     |
+| No | Nama Pasien | Status    | Estimasi | Dokter Ditugaskan | Aksi  |
+| -- | ----------- | --------- | -------- | ----------------- | ----- |
+| 1  | Andi        | waiting   | 10 mnt   | Dr. Sari (11:00)  | Skip  |
+| 2  | Budi        | skipped   | -        | -                 | Recall|
 
-Contoh render dengan Chakra:
+Render + aksi (lihat `QueueTable.jsx`):
 
 ```jsx
-<Table.Root size="sm" variant="line">
-  <Table.Header>
-    <Table.Row>
-      <Table.ColumnHeader>Nama Pasien</Table.ColumnHeader>
-      <Table.ColumnHeader>Status</Table.ColumnHeader>
-      <Table.ColumnHeader>Estimasi</Table.ColumnHeader>
-      <Table.ColumnHeader>Dokter Ditugaskan</Table.ColumnHeader>
-      <Table.ColumnHeader>Aksi</Table.ColumnHeader>
-    </Table.Row>
-  </Table.Header>
-  <Table.Body>
-    {queue.map((p) => (
-      <Table.Row key={p.id}>
-        <Table.Cell>{p.patient_name}</Table.Cell>
-        <Table.Cell><StatusBadge status={p.status} /></Table.Cell>
-        <Table.Cell>{p.estimatedTime} mnt</Table.Cell>
-        <Table.Cell>{p.assignedDoctor.name}</Table.Cell>
-        <Table.Cell>
-          {p.status === 'waiting' ? (
-            <Button size="xs" colorPalette="red" variant="outline" onClick={() => onSkip(p.id)}>
-              Skip
-            </Button>
-          ) : (
-            <Button size="xs" colorPalette="green" variant="outline" onClick={() => onRecall(p.id)}>
-              Recall
-            </Button>
-          )}
-        </Table.Cell>
-      </Table.Row>
-    ))}
-  </Table.Body>
-</Table.Root>
+<td className="px-4 py-2">
+  {p.status === 'waiting' ? (
+    <button
+      type="button"
+      onClick={() => setSkipTarget(p)}
+      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50"
+    >
+      Skip
+    </button>
+  ) : (
+    <button
+      type="button"
+      onClick={() => onRecall(p.id)}
+      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+    >
+      Recall
+    </button>
+  )}
+</td>
 ```
 
-`StatusBadge` memakai `Badge` Chakra dengan colorScheme sesuai `styles.md`.
+`StatusBadge` pakai kelas `span` Tailwind, bukan `Badge` Chakra (lihat `styles.md`).
 
 ### Aksi per baris queue
 
-| Aksi  | Endpoint                    | Catatan                    |
-| ----- | --------------------------- | -------------------------- |
-| Skip  | `PATCH /api/queue/:id/skip` | Status jadi `skipped`, dokter otomatis dibebaskan |
-| Recall | `PATCH /api/queue/:id/recall` | Status kembali `waiting` |
+| Aksi   | Endpoint                    | Catatan                                  |
+| ------ | --------------------------- | ---------------------------------------- |
+| Skip   | `PATCH /api/queue/:id/skip` | Status jadi `skipped`, dokter otomatis dibebaskan |
+| Recall | `PATCH /api/queue/:id/recall` | Status kembali `waiting`               |
 
 ## 3. Map status
 
-| Status   | Arti                              | Chakra colorPalette (styles.md) |
-| -------- | --------------------------------- | ------------------------------- |
-| waiting  | Sedang menunggu giliran           | `orange`                        |
-| skipped  | Dilewati sementara                | `red`                           |
-| called   | Sudah dipanggil ke dokter         | `gray`                          |
-| done     | Konsultasi selesai                | `green`                         |
+| Status   | Arti                        | Tailwind (styles.md)       |
+| -------- | --------------------------- | -------------------------- |
+| waiting  | Sedang menunggu giliran     | `amber-100 / text-amber-800` |
+| skipped  | Dilewati sementara          | `red-100 / text-red-700`   |
+| called   | Sudah dipanggil ke dokter   | `gray-100 / text-gray-700` |
+| done     | Konsultasi selesai          | `emerald-100 / text-emerald-700` |
 
 ## Format & konvensi untuk frontend
 
-- Backend mengirim **snake_case** untuk kolom DB (`patient_name`, `avg_consult_time`, `joined_at`).
-- Backend menghitung field turunan **camelCase** (`estimatedTime`, `assignedDoctor`).
-- Timestamp: kolom DB berupa **ISO 8601 string**, `availableAt` berupa **timestamp ms** — perlakukan sesuai tipe masing-masing saat konversi.
-- Jika backend mengubah response, update file ini agar kontrak tetap sinkron.
+- Backend kirim **snake_case** untuk kolom DB (`patient_name`, `avg_consult_time`, `joined_at`).
+- Backend hitung field turunan **camelCase** (`estimatedTime`, `assignedDoctor`).
+- Timestamp: kolom DB berupa **ISO 8601 string**; `availableAt` berupa **timestamp ms** — konversi sesuai tipe masing-masing saat memakai.
+- Jika backend ganti response, update file ini agar kontrak tetap sinkron.

@@ -1,20 +1,14 @@
-import { Box, Heading, SimpleGrid, Table, Text } from '@chakra-ui/react'
-import { Card, Stat } from '@chakra-ui/react'
 import { useDoctors } from '../hooks/useDoctors'
 import { useQueue } from '../hooks/useQueue'
 import StatusBadge from '../components/StatusBadge'
 
-function StatCard({ label, value, help, tone }) {
+function StatCard({ label, value, help, toneClass }) {
   return (
-    <Card.Root>
-      <Card.Body>
-        <Stat.Root>
-          <Stat.Label>{label}</Stat.Label>
-          <Stat.ValueText color={tone}>{value}</Stat.ValueText>
-          <Stat.HelpText>{help}</Stat.HelpText>
-        </Stat.Root>
-      </Card.Body>
-    </Card.Root>
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${toneClass}`}>{value}</p>
+      <p className="text-xs text-gray-400 mt-1">{help}</p>
+    </div>
   )
 }
 
@@ -29,59 +23,75 @@ function DashboardPage() {
   const preview = queue.slice(0, 5)
 
   return (
-    <Box>
-      <Heading size="lg" mb="1">
-        Dashboard
-      </Heading>
-      <Text color="gray.500" fontSize="sm" mb="5">
-        Ringkasan antrian dan ketersediaan dokter
-      </Text>
+    <div>
+      <h1 className="text-xl font-semibold">Dashboard</h1>
+      <p className="text-sm text-gray-500 mb-5">Ringkasan antrian dan ketersediaan dokter</p>
 
-      <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} gap="4" mb="6">
-        <StatCard label="Menunggu" value={queueLoading ? '...' : waitingCount} help="pasien dalam antrian" tone="orange.500" />
-        <StatCard label="Di-skip" value={queueLoading ? '...' : skippedCount} help="pasien dilewati" tone="red.500" />
-        <StatCard label="Total Dokter" value={doctorsLoading ? '...' : doctors.length} help="dokter aktif" tone="brand.500" />
-        <StatCard label="Estimasi Berikutnya" value={queueLoading ? '...' : `${nextEstimate} mnt`} help={nextPatient ? `untuk ${nextPatient.patient_name}` : 'antrian kosong'} tone="green.500" />
-      </SimpleGrid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Menunggu"
+          value={queueLoading ? '...' : waitingCount}
+          help="pasien dalam antrian"
+          toneClass="text-amber-600"
+        />
+        <StatCard
+          label="Di-skip"
+          value={queueLoading ? '...' : skippedCount}
+          help="pasien dilewati"
+          toneClass="text-red-600"
+        />
+        <StatCard
+          label="Total Dokter"
+          value={doctorsLoading ? '...' : doctors.length}
+          help="dokter aktif"
+          toneClass="text-brand-600"
+        />
+        <StatCard
+          label="Estimasi Berikutnya"
+          value={queueLoading ? '...' : `${nextEstimate} mnt`}
+          help={nextPatient ? `untuk ${nextPatient.patient_name}` : 'antrian kosong'}
+          toneClass="text-emerald-600"
+        />
+      </div>
 
-      <Card.Root>
-        <Card.Header>
-          <Card.Title size="sm">Antrian Terbaru</Card.Title>
-        </Card.Header>
-        <Card.Body>
-          {preview.length === 0 ? (
-            <Text color="gray.500" fontSize="sm">
-              Belum ada pasien dalam antrian.
-            </Text>
-          ) : (
-            <Table.Root size="sm" variant="line">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader>No</Table.ColumnHeader>
-                  <Table.ColumnHeader>Pasien</Table.ColumnHeader>
-                  <Table.ColumnHeader>Status</Table.ColumnHeader>
-                  <Table.ColumnHeader>Estimasi</Table.ColumnHeader>
-                  <Table.ColumnHeader>Dokter</Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <h2 className="text-sm font-semibold">Antrian Terbaru</h2>
+        </div>
+        {!preview.length ? (
+          <p className="px-4 py-4 text-sm text-gray-500">Belum ada pasien dalam antrian.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b border-gray-200">
+                  <th className="px-4 py-2 font-medium">No</th>
+                  <th className="px-4 py-2 font-medium">Pasien</th>
+                  <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2 font-medium">Estimasi</th>
+                  <th className="px-4 py-2 font-medium">Dokter</th>
+                </tr>
+              </thead>
+              <tbody>
                 {preview.map((p, idx) => (
-                  <Table.Row key={p.id}>
-                    <Table.Cell>{idx + 1}</Table.Cell>
-                    <Table.Cell fontWeight="medium">{p.patient_name}</Table.Cell>
-                    <Table.Cell>
+                  <tr key={p.id} className="border-b border-gray-100 last:border-0">
+                    <td className="px-4 py-2">{idx + 1}</td>
+                    <td className="px-4 py-2 font-medium">{p.patient_name}</td>
+                    <td className="px-4 py-2">
                       <StatusBadge status={p.status} />
-                    </Table.Cell>
-                    <Table.Cell>{p.estimatedTime} mnt</Table.Cell>
-                    <Table.Cell>{p.assignedDoctor ? p.assignedDoctor.name : '-'}</Table.Cell>
-                  </Table.Row>
+                    </td>
+                    <td className="px-4 py-2">{p.estimatedTime} mnt</td>
+                    <td className="px-4 py-2">
+                      {p.assignedDoctor ? p.assignedDoctor.name : '-'}
+                    </td>
+                  </tr>
                 ))}
-              </Table.Body>
-            </Table.Root>
-          )}
-        </Card.Body>
-      </Card.Root>
-    </Box>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

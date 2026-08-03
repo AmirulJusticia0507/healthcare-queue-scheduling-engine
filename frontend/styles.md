@@ -1,144 +1,124 @@
-# Style Guide (Chakra UI Theme)
+# Style Guide (Tailwind CSS v4)
 
-Panduan tampilan frontend Healthcare Queue Scheduling Engine berbasis **Chakra UI v3**.
+Panduan tampilan frontend Healthcare Queue Scheduling Engine berbasis **Tailwind CSS**.
 
-Definisikan token di `src/theme.js` (pakai `createSystem` + `defineConfig`) lalu gunakan `ChakraProvider value={system}` di `main.jsx` (lihat `README.md`).
+Konfigurasi di `src/index.css`:
 
-## Tema
+```css
+@import "tailwindcss";
 
-Kesan bersih, tenang, dan dapat dipercaya (sesuai konteks kesehatan).
-
-## Palet warna
-
-| Token      | Chakra colorPalette | Hex       | Penggunaan                            |
-| ---------- | ------------------- | --------- | ------------------------------------- |
-| brand      | `brand`             | `#2563eb` | Tombol utama, link, aksen aktif       |
-| secondary  | `secondary`         | `#0ea5e9` | Aksen sekunder, highlight             |
-| success    | `green`             | `#16a34a` | Status `done`, sukses                 |
-| warning    | `orange`            | `#f59e0b` | Status `waiting`                      |
-| danger     | `red`               | `#dc2626` | Status `skipped`, aksi hapus/skip     |
-| info       | `gray`              | `#6b7280` | Status `called` (dipanggil)           |
-| Background | `gray.50`           | `#f8fafc` | Latar halaman                         |
-| Surface    | `white`             | `#ffffff` | Kartu, tabel, header                  |
-| Text       | `gray.900`          | `#0f172a` | Teks utama                            |
-| Text-muted | `gray.500`          | `#64748b` | Teks sekunder / placeholder           |
-| Border     | `gray.200`          | `#e2e8f0` | Garis tabel, divider                  |
-
-### `src/theme.js`
-
-```js
-import { createSystem, defineConfig } from '@chakra-ui/react';
-
-const config = defineConfig({
-  theme: {
-    tokens: {
-      colors: {
-        brand: {
-          50: { value: '#eff6ff' },
-          100: { value: '#dbeafe' },
-          500: { value: '#2563eb' },
-          600: { value: '#1d4ed8' },
-          700: { value: '#1e40af' },
-        },
-        secondary: {
-          500: { value: '#0ea5e9' },
-        },
-      },
-    },
-  },
-});
-
-const system = createSystem(config);
-
-export default system;
-```
-
-## Typography
-
-| Pemakaian     | Chakra           | Keterangan              |
-| ------------- | ---------------- | ----------------------- |
-| Font body     | `fontSize="sm"`  | Tabel, deskripsi        |
-| Teks utama    | `fontSize="md"`  | Paragraf                |
-| Subheading    | `fontSize="lg"`  | `fontWeight="semibold"` |
-| Judul halaman | `fontSize="xl"`  | `fontWeight="bold"`     |
-| Judul utama   | `fontSize="2xl"` | Halaman hero            |
-
-Gunakan komponen `Heading` untuk judul, `Text` untuk paragraf, dengan `color` dari token theme.
-
-## Komponen Chakra yang dipakai
-
-### Tombol (`Button`)
-
-- Primary: `<Button colorPalette="brand">`
-- Danger/skip: `<Button colorPalette="red">`
-- Ringan: `<Button variant="outline">`
-- Loading: `<Button loading>`
-- Ukuran: `size="xs"`/`sm` untuk aksi di tabel, `size="md"` default.
-
-### Badge status (`Badge`)
-
-| Status   | Chakra `colorPalette` |
-| -------- | --------------------- |
-| waiting  | `orange`              |
-| skipped  | `red`                 |
-| called   | `gray`                |
-| done     | `green`               |
-
-```jsx
-const STATUS_COLOR_PALETTE = {
-  waiting: 'orange',
-  skipped: 'red',
-  called: 'gray',
-  done: 'green',
-};
-
-function StatusBadge({ status }) {
-  return (
-    <Badge colorPalette={STATUS_COLOR_PALETTE[status] || 'gray'} variant="subtle">
-      {status}
-    </Badge>
-  );
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-500: #2563eb;
+  --color-brand-600: #1d4ed8;
+  --color-brand-700: #1e40af;
 }
 ```
 
-### Tabel (`Table`)
+> Kita pakai utility class langsung (misal `bg-brand-600`, `text-sm`) — tidak ada konsep *component variant* seperti Chakra. Semua gaya ada di JSX.
 
-Gunakan komposisi v3:
+## Kesan
+
+Bersih, tenang, dapat dipercaya (sesuai konteks kesehatan).
+
+## Palet warna
+
+| Token        | Kelas Tailwind        | Hex       | Penggunaan                            |
+| ------------ | --------------------- | --------- | ------------------------------------- |
+| brand        | `brand-500/600/700`   | `#2563eb` | Tombol utama, link, aksen aktif       |
+| success      | `emerald-500/600`     | `#16a34a` | Status `done`                         |
+| warning      | `amber-500/600`       | `#f59e0b` | Status `waiting`                      |
+| danger       | `red-500/600`         | `#dc2626` | Status `skipped`, aksi skip           |
+| info         | `gray-500/600`        | `#6b7280` | Status `called` (dipanggil)           |
+| Background   | `gray-50`             | `#f8fafc` | Latar halaman → `bg-gray-50`          |
+| Surface      | `white`               | `#ffffff` | Kartu, tabel, header → `bg-white`     |
+| Text utama   | `gray-900`            | `#111827` | `text-gray-900`                       |
+| Text-muted   | `gray-500`            | `#6b7280` | `text-gray-500`                       |
+| Border       | `gray-200`            | `#e2e8f0` | `border-gray-200`                     |
+
+## Typography
+
+| Pemakaian      | Tailwind class                          |
+| -------------- | --------------------------------------- |
+| Teks body/kecil| `text-xs` / `text-sm`                   |
+| Teks utama     | `text-base`                             |
+| Subheading     | `text-lg font-semibold`                 |
+| Judul halaman  | `text-xl font-bold`                     |
+| Judul utama    | `text-2xl font-bold`                    |
+
+## Primitives reusable
+
+### Badge status (`StatusBadge`)
 
 ```jsx
-<Table.Root size="sm" variant="line">
-  <Table.Header>
-    <Table.Row>
-      <Table.ColumnHeader>Nama</Table.ColumnHeader>
-    </Table.Row>
-  </Table.Header>
-  <Table.Body>
-    <Table.Row>
-      <Table.Cell>...</Table.Cell>
-    </Table.Row>
-  </Table.Body>
-</Table.Root>
+const STATUS_STYLES = {
+  waiting: 'bg-amber-100 text-amber-800 border-amber-200',
+  skipped: 'bg-red-100 text-red-700 border-red-200',
+  called: 'bg-gray-100 text-gray-700 border-gray-200',
+  done: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+}
+
+function StatusBadge({ status }) {
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border ${
+        STATUS_STYLES[status] || 'bg-gray-100 text-gray-700 border-gray-200'
+      }`}
+    >
+      {status}
+    </span>
+  )
+}
 ```
 
-### Form
+### Input
 
-- `Field.Root` + `Field.Label` (menggantikan `FormControl`/`FormLabel`).
-- Input: `Input`, number: `NumberInput.Root` + `NumberInput.Input`.
-- State error: `Field.Root invalid` + `Field.ErrorText`.
-- Fokus otomatis di-styling Chakra.
+```html
+<input className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500" />
+```
 
-### Feedback
+### Tombol
 
-- Pakai `toaster`/`useToast` untuk notifikasi sukses/error aksi (join, skip, recall, tambah dokter).
-- Konfirmasi aksi skip/hapus: `Dialog.Root` atau `AlertDialog`.
+- Primary: `bg-brand-600 text-white hover:bg-brand-700`
+- Danger/skip: `border border-red-300 text-red-600 hover:bg-red-50`
+- Ringan/outline: `border border-gray-300 text-gray-700 hover:bg-gray-100`
+- Semua tombol: `px-2.5 py-1.5 rounded-md font-medium text-xs`, tambahkan `disabled:opacity-50` saat loading.
+
+### Card / surface
+
+```html
+<div class="bg-white rounded-lg border border-gray-200 p-4">…</div>
+```
+
+### Tabel
+
+Pakai elemen native `<table>` Tailwind:
+
+```html
+<div class="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-gray-500 border-b border-gray-200">
+        <th class="px-4 py-2 font-medium">Nama</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-b border-gray-100 last:border-0">
+        <td class="px-4 py-2">…</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
 
 ## Layout
 
-- `Container` (`maxW="4xl"`) untuk batas lebar konten.
-- Halaman: `Stack`/`VStack` untuk susunan vertikal, `HStack`/`Flex` untuk baris.
-- Tabs: `Tabs.Root` + `Tabs.List` + `Tabs.Trigger` + `Tabs.Content` (pakai `value`/`defaultValue`).
+- Batas lebar konten: `max-w-6xl mx-auto`.
+- Halaman vertikal: `space-y-4`.
+- Sidebar responsif: `w-full md:w-56` (flex-col desktop, flex-wrap mobile).
 
 ## Responsive
 
-- Pakai props responsive Chakra: `w={{ base: '100%', md: '50%' }}`, `flexDir={{ base: 'column', md: 'row' }}`.
-- Tabel panjang: `Table.Root overflowX="auto"` untuk scroll horizontal di layar kecil.
+- Mobile-first dengan breakpoint `sm`, `md`, `lg`, `xl`.
+- Grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
+- Tabel panjang: bungkus `overflow-x-auto`.

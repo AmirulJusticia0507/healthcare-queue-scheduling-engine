@@ -1,8 +1,8 @@
 # Healthcare Queue Scheduling Engine - Frontend
 
-Frontend SPA untuk Healthcare Queue Scheduling Engine, dibangun dengan **React + Vite + Chakra UI**.
+Frontend SPA untuk Healthcare Queue Scheduling Engine, dibangun dengan **React + Vite + Tailwind CSS v4**.
 
-Berinteraksi dengan backend Express di `backend/` melalui REST API. Lihat `tables.md` untuk kontrak data dan `styles.md` untuk tema Chakra.
+Berinteraksi dengan backend Express di `backend/` melalui REST API. Lihat `tables.md` untuk kontrak data dan `styles.md` untuk sistem desain Tailwind.
 
 ## Prasyarat
 
@@ -13,13 +13,13 @@ Berinteraksi dengan backend Express di `backend/` melalui REST API. Lihat `table
 ## Setup
 
 ```bash
-# buat project dari repo ini (direktori frontend)
 cd frontend
 npm create vite@latest . -- --template react
 npm install
 
-# dependency tambahan: axios + Chakra UI
-npm install axios @chakra-ui/react @emotion/react @emotion/styled framer-motion
+# dependency tambahan
+npm install axios react-router-dom
+npm install -D tailwindcss @tailwindcss/vite
 ```
 
 ## Menjalankan
@@ -28,49 +28,29 @@ npm install axios @chakra-ui/react @emotion/react @emotion/styled framer-motion
 npm run dev
 ```
 
-Secara default berjalan di `http://localhost:5173`. Backend di `http://localhost:5000`.
+Berinteraksi dengan backend lewat Vite proxy di `vite.config.js` (`/api` → `http://localhost:5000`), jadi di dev cukup panggil `/api/...`.
 
-Bungkus aplikasi dengan `ChakraProvider` di `main.jsx` (Chakra UI v3):
-
-```jsx
-import { ChakraProvider } from '@chakra-ui/react';
-import system from './theme';
-
-createRoot(document.getElementById('root')).render(
-  <ChakraProvider value={system}>
-    <App />
-  </ChakraProvider>
-);
-```
-
-Untuk memakai Vite proxy ke backend, tambahkan di `vite.config.js`:
-
-```js
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/api': 'http://localhost:5000',
-    },
-  },
-});
-```
+Buka `http://localhost:5173` (atau port berikutnya jika 5173 dipakai). Backend harus jalan di `http://localhost:5000`.
 
 ## Konfigurasi API
 
-Simpan base URL di file `.env` (root frontend):
+Base URL dikelola lewat Vite proxy (dev), sehingga service pakai path relatif `/api/...`. Jika butuh base yang bisa dikonfig, simpan di `.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-Contoh akses:
+Service `axios` default ke path relatif:
 
 ```js
-const API = import.meta.env.VITE_API_BASE_URL;
+const API = '/api'
+export async function getQueue() {
+  const res = await axios.get(`${API}/queue`)
+  return res.data
+}
 ```
 
-## Fitur yang direncanakan
+## Fitur
 
 - Dashboard ringkasan (jumlah menunggu, skip, dokter, estimasi)
 - Daftar dokter + tambah dokter
@@ -78,36 +58,44 @@ const API = import.meta.env.VITE_API_BASE_URL;
 - Join queue (tambah pasien)
 - Skip & recall pasien
 - Indikator status pasien (waiting / skipped / called / done)
-- Layout navbar + sidebar + footer (AppLayout)
+- Layout navbar + sidebar + footer (`AppLayout`)
 - Notifikasi toast untuk aksi join/skip/recall/tambah dokter
-- Modal konfirmasi sebelum skip pasien
+- Dialog konfirmasi sebelum skip pasien
 
-## Struktur proyek (target)
+## Struktur proyek
 
 ```
 frontend/
 ├── src/
 │   ├── layouts/           # AppLayout (navbar + sidebar + footer)
-│   ├── components/        # komponen reusable (QueueTable, StatusBadge, ...)
+│   ├── components/        # komponen reusable (QueueTable, StatusBadge, Toasts, ...)
 │   ├── pages/             # halaman (Dashboard, Queue, Doctors)
-│   ├── services/          # pemanggilan API
-│   ├── hooks/             # custom hooks
-│   ├── theme.js           # Chakra theme (lihat styles.md)
+│   ├── services/          # pemanggilan API (axios)
+│   ├── hooks/             # custom hooks (useQueue, useDoctors)
+│   ├── lib/               # utilitas (toast store)
 │   ├── App.jsx            # routing (react-router-dom)
-│   └── main.jsx
+│   └── main.jsx           # entry point
+├── index.css              # @import "tailwindcss" + custom theme
+├── vite.config.js         # proxy /api
 ├── README.md
 ├── guidelines.md          # aturan pengembangan
-├── styles.md              # Chakra theme / design system
+├── styles.md              # desain system (Tailwind)
 └── tables.md              # struktur data & tabel tampilan
 ```
 
 ## Endpoint backend yang dipakai
 
-| Method | Endpoint               | Keterangan                      |
-| ------ | ---------------------- | ------------------------------- |
-| GET    | `/api/doctors`         | Daftar dokter                   |
-| POST   | `/api/doctors`         | Tambah dokter                   |
-| GET    | `/api/queue`           | Antrian + estimasi              |
-| POST   | `/api/queue`           | Pasien join antrian             |
-| PATCH  | `/api/queue/:id/skip`  | Skip pasien                     |
-| PATCH  | `/api/queue/:id/recall`| Recall pasien yang di-skip      |
+| Method | Endpoint                | Keterangan                      |
+| ------ | ----------------------- | ------------------------------- |
+| GET    | `/api/doctors`          | Daftar dokter                   |
+| POST   | `/api/doctors`          | Tambah dokter                   |
+| GET    | `/api/queue`            | Antrian + estimasi              |
+| POST   | `/api/queue`            | Pasien join antrian             |
+| PATCH  | `/api/queue/:id/skip`   | Skip pasien                     |
+| PATCH  | `/api/queue/:id/recall` | Recall pasien yang di-skip      |
+
+## Build
+
+```bash
+npm run build
+```

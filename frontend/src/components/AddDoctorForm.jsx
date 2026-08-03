@@ -1,12 +1,7 @@
 import { useState } from 'react'
-import {
-  Box,
-  Button,
-  Field,
-  Input,
-  NumberInput,
-  VStack,
-} from '@chakra-ui/react'
+
+const inputClass =
+  'block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500'
 
 function AddDoctorForm({ onSubmit, loading }) {
   const [name, setName] = useState('')
@@ -21,37 +16,46 @@ function AddDoctorForm({ onSubmit, loading }) {
   }
 
   return (
-    <Box as="form" onSubmit={handleSubmit} p="4" borderWidth="1px" borderRadius="md">
-      <VStack spacing="3" align="stretch">
-        <Field.Root required>
-          <Field.Label fontSize="sm">Nama Dokter</Field.Label>
-          <Input
-            size="sm"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Dr. Budi"
-          />
-        </Field.Root>
-        <Field.Root required>
-          <Field.Label fontSize="sm">Konsultasi (menit)</Field.Label>
-          <NumberInput.Root
-            size="sm"
-            min={1}
-            value={avgConsultTime}
-            onValueChange={(details) => setAvgConsultTime(details.value)}
-          >
-            <NumberInput.Input />
-            <NumberInput.Control>
-              <NumberInput.IncrementTrigger />
-              <NumberInput.DecrementTrigger />
-            </NumberInput.Control>
-          </NumberInput.Root>
-        </Field.Root>
-        <Button type="submit" colorPalette="brand" size="sm" loading={loading}>
-          Tambah Dokter
-        </Button>
-      </VStack>
-    </Box>
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white border border-gray-200 rounded-lg p-4 space-y-3"
+    >
+      <div>
+        <label htmlFor="doctor-name" className="block text-sm font-medium text-gray-700 mb-1">
+          Nama Dokter
+        </label>
+        <input
+          id="doctor-name"
+          type="text"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Dr. Budi"
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label htmlFor="consult-time" className="block text-sm font-medium text-gray-700 mb-1">
+          Konsultasi (menit)
+        </label>
+        <input
+          id="consult-time"
+          type="number"
+          min={1}
+          required
+          value={avgConsultTime}
+          onChange={(e) => setAvgConsultTime(e.target.value)}
+          className={inputClass}
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full px-3 py-2 text-sm font-medium rounded-md bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50"
+      >
+        {loading ? 'Memproses...' : 'Tambah Dokter'}
+      </button>
+    </form>
   )
 }
 
