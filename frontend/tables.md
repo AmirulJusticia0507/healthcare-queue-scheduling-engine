@@ -50,24 +50,24 @@ Body yang dikirim pakai `avgConsultTime` (camelCase), namun respons mengembalika
 Contoh render dengan Chakra:
 
 ```jsx
-<Table>
-  <Thead>
-    <Tr>
-      <Th>Nama Dokter</Th>
-      <Th>Konsultasi (mnt)</Th>
-      <Th>Tersedia Kembali</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
+<Table.Root size="sm" variant="line">
+  <Table.Header>
+    <Table.Row>
+      <Table.ColumnHeader>Nama Dokter</Table.ColumnHeader>
+      <Table.ColumnHeader>Konsultasi (mnt)</Table.ColumnHeader>
+      <Table.ColumnHeader>Tersedia Kembali</Table.ColumnHeader>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
     {doctors.map((d) => (
-      <Tr key={d.id}>
-        <Td>{d.name}</Td>
-        <Td>{d.avg_consult_time}</Td>
-        <Td>{new Date(d.available_at).toLocaleTimeString()}</Td>
-      </Tr>
+      <Table.Row key={d.id}>
+        <Table.Cell>{d.name}</Table.Cell>
+        <Table.Cell>{d.avg_consult_time}</Table.Cell>
+        <Table.Cell>{new Date(d.available_at).toLocaleTimeString()}</Table.Cell>
+      </Table.Row>
     ))}
-  </Tbody>
-</Table>
+  </Table.Body>
+</Table.Root>
 ```
 
 ## 2. Queue
@@ -158,38 +158,38 @@ Error jika id tidak ditemukan:
 Contoh render dengan Chakra:
 
 ```jsx
-<Table>
-  <Thead>
-    <Tr>
-      <Th>Nama Pasien</Th>
-      <Th>Status</Th>
-      <Th>Estimasi</Th>
-      <Th>Dokter Ditugaskan</Th>
-      <Th>Aksi</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
+<Table.Root size="sm" variant="line">
+  <Table.Header>
+    <Table.Row>
+      <Table.ColumnHeader>Nama Pasien</Table.ColumnHeader>
+      <Table.ColumnHeader>Status</Table.ColumnHeader>
+      <Table.ColumnHeader>Estimasi</Table.ColumnHeader>
+      <Table.ColumnHeader>Dokter Ditugaskan</Table.ColumnHeader>
+      <Table.ColumnHeader>Aksi</Table.ColumnHeader>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
     {queue.map((p) => (
-      <Tr key={p.id}>
-        <Td>{p.patient_name}</Td>
-        <Td><StatusBadge status={p.status} /></Td>
-        <Td>{p.estimatedTime} mnt</Td>
-        <Td>{p.assignedDoctor.name}</Td>
-        <Td>
+      <Table.Row key={p.id}>
+        <Table.Cell>{p.patient_name}</Table.Cell>
+        <Table.Cell><StatusBadge status={p.status} /></Table.Cell>
+        <Table.Cell>{p.estimatedTime} mnt</Table.Cell>
+        <Table.Cell>{p.assignedDoctor.name}</Table.Cell>
+        <Table.Cell>
           {p.status === 'waiting' ? (
-            <Button size="sm" colorScheme="red" onClick={() => onSkip(p.id)}>
+            <Button size="xs" colorPalette="red" variant="outline" onClick={() => onSkip(p.id)}>
               Skip
             </Button>
           ) : (
-            <Button size="sm" colorScheme="green" onClick={() => onRecall(p.id)}>
+            <Button size="xs" colorPalette="green" variant="outline" onClick={() => onRecall(p.id)}>
               Recall
             </Button>
           )}
-        </Td>
-      </Tr>
+        </Table.Cell>
+      </Table.Row>
     ))}
-  </Tbody>
-</Table>
+  </Table.Body>
+</Table.Root>
 ```
 
 `StatusBadge` memakai `Badge` Chakra dengan colorScheme sesuai `styles.md`.
@@ -203,12 +203,12 @@ Contoh render dengan Chakra:
 
 ## 3. Map status
 
-| Status   | Arti                              | Chakra colorScheme (styles.md) |
-| -------- | --------------------------------- | ------------------------------ |
-| waiting  | Sedang menunggu giliran           | `orange`                       |
-| skipped  | Dilewati sementara                | `red`                          |
-| called   | Sudah dipanggil ke dokter         | `gray`                         |
-| done     | Konsultasi selesai                | `green`                        |
+| Status   | Arti                              | Chakra colorPalette (styles.md) |
+| -------- | --------------------------------- | ------------------------------- |
+| waiting  | Sedang menunggu giliran           | `orange`                        |
+| skipped  | Dilewati sementara                | `red`                           |
+| called   | Sudah dipanggil ke dokter         | `gray`                          |
+| done     | Konsultasi selesai                | `green`                         |
 
 ## Format & konvensi untuk frontend
 

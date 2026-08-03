@@ -17,6 +17,18 @@ async function getDoctors() {
   return res.rows;
 }
 
+/**
+ * Baseline: semua dokter dianggap free mulai sekarang.
+ * available_at di DB hanya dipakai untuk tampilan, bukan sumber kebenaran
+ * simulasi — sehingga hasil simulasi deterministik dan konsisten antar request.
+ */
+function getBaselineDoctors(doctors, now) {
+  return doctors.map((d) => ({
+    ...d,
+    available_at: new Date(now).toISOString(),
+  }));
+}
+
 async function persistDoctorAvailability(doctorStates) {
   for (const doctor of doctorStates) {
     await pool.query(
@@ -28,22 +40,26 @@ async function persistDoctorAvailability(doctorStates) {
 
 /**
  * Hitung ulang jadwal seluruh antrian lalu simpan available_at dokter ke DB.
- * Dipanggil setiap kali antrian berubah (join/skip/recall) supaya estimasi
- * konsisten antar request.
+ * Dipanggil setiap kali antrian berubah (join/skip/recall). Simulasi selalu
+ * dimulai dari baseline "semua dokter free" supaya skip/recall otomatis
+ * membebaskan slot dan hasilnya konsisten dengan GET.
  */
 async function recalculateAvailability() {
   const [doctors, queue] = await Promise.all([getDoctors(), getWaitingQueue()]);
-  const { doctorStates } = simulateQueue(doctors, queue);
+  const now = Date.now();
+  const { doctorStates } = simulateQueue(getBaselineDoctors(doctors, now), queue, now);
   await persistDoctorAvailability(doctorStates);
 }
 
 /**
  * Ambil queue pasien waiting + estimatedTime + assignedDoctor.
- * Hanya simulasi dari available_at yang tersimpan di DB, tanpa menulis.
+ * Hanya simulasi (tanpa menulis), hasilnya sama dengan hitung ulang terakhir
+ * selama antrian tidak berubah.
  */
 async function getQueueEntries() {
   const [doctors, queue] = await Promise.all([getDoctors(), getWaitingQueue()]);
-  const { updatedQueue } = simulateQueue(doctors, queue);
+  const now = Date.now();
+  const { updatedQueue } = simulateQueue(getBaselineDoctors(doctors, now), queue, now);
   return updatedQueue;
 }
 

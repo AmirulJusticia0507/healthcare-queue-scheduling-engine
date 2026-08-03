@@ -30,14 +30,14 @@ npm run dev
 
 Secara default berjalan di `http://localhost:5173`. Backend di `http://localhost:5000`.
 
-Bungkus aplikasi dengan `ChakraProvider` di `main.jsx`:
+Bungkus aplikasi dengan `ChakraProvider` di `main.jsx` (Chakra UI v3):
 
 ```jsx
 import { ChakraProvider } from '@chakra-ui/react';
-import theme from './theme';
+import system from './theme';
 
 createRoot(document.getElementById('root')).render(
-  <ChakraProvider theme={theme}>
+  <ChakraProvider value={system}>
     <App />
   </ChakraProvider>
 );
