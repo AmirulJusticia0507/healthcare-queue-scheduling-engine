@@ -79,6 +79,8 @@ const API = import.meta.env.VITE_API_BASE_URL;
 - Skip & recall pasien
 - Indikator status pasien (waiting / skipped / called / done)
 - Layout navbar + sidebar + footer (AppLayout)
+- Notifikasi toast untuk aksi join/skip/recall/tambah dokter
+- Modal konfirmasi sebelum skip pasien
 
 ## Struktur proyek (target)
 

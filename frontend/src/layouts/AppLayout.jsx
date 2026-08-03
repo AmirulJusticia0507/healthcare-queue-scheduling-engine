@@ -5,8 +5,10 @@ import {
   Heading,
   Link as ChakraLink,
   Text,
+  Toaster,
 } from '@chakra-ui/react'
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
+import { toaster } from '../lib/toaster'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
@@ -108,6 +110,7 @@ function Footer() {
 function AppLayout() {
   return (
     <Flex minH="100vh" direction="column" bg="gray.50">
+      <Toaster toaster={toaster} />
       <Navbar />
       <Container maxW="6xl" display="flex" flex="1" p="0" flexDirection={{ base: 'column', md: 'row' }}>
         <Sidebar />
