@@ -4,5 +4,7 @@ const queueController = require('./queue.controller');
 
 router.get('/', queueController.getQueue);
 router.post('/', queueController.joinQueue);
+router.patch('/:id/skip', queueController.skipPatient);
+router.patch('/:id/recall', queueController.recallPatient);
 
 module.exports = router;
