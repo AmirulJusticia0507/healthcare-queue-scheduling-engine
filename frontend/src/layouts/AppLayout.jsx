@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
   { path: '/queue', label: 'Antrian' },
+  { path: '/history', label: 'Riwayat' },
   { path: '/doctors', label: 'Dokter' },
 ]
 

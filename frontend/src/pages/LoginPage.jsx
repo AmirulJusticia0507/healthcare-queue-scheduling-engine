@@ -15,7 +15,12 @@ function LoginPage() {
     try {
       await login(email, password)
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || 'Login gagal')
+      const d = err?.response?.data
+      if (err?.response?.status === 429 && d?.retrySeconds) {
+        setError(`${d.error || 'Terlalu banyak percobaan'}. Coba lagi dalam ${d.retrySeconds}s.`)
+      } else {
+        setError(d?.error || err.message || 'Login gagal')
+      }
     } finally {
       setSubmitting(false)
     }

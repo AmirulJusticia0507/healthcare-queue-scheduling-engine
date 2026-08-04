@@ -1,19 +1,43 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../src/config/database');
 
-const DEFAULT_ADMIN = {
-  name: 'Admin',
-  email: 'admin@health.id',
-  password: 'admin123',
-  role: 'admin',
-};
+const USERS = [
+  { name: 'Admin', email: 'admin@health.id', password: 'admin123', role: 'admin' },
+  { name: 'Staff', email: 'staff@health.id', password: 'staff123', role: 'staff' },
+];
 
-// Seed dokter default (sama seperti data awal)
 const DOCTORS = [
   { name: 'Dr. Sari', avg_consult_time: 15 },
   { name: 'Dr. Budi', avg_consult_time: 20 },
   { name: 'Dr. Andi', avg_consult_time: 10 },
 ];
+
+async function upsertUser(u) {
+  const existing = await pool.query(
+    'SELECT id, password_hash FROM users WHERE email = $1',
+    [u.email]
+  );
+  if (existing.rows.length > 0) {
+    const pwOk = await bcrypt.compare(u.password, existing.rows[0].password_hash);
+    if (!pwOk) {
+      const hash = await bcrypt.hash(u.password, 10);
+      await pool.query(
+        'UPDATE users SET name = $1, password_hash = $2, role = $3 WHERE id = $4',
+        [u.name, hash, u.role, existing.rows[0].id]
+      );
+      console.log(`Reset password & role for ${u.email} (${u.role})`);
+    } else {
+      await pool.query('UPDATE users SET name = $1, role = $2 WHERE id = $3', [u.name, u.role, existing.rows[0].id]);
+    }
+    return;
+  }
+  const hash = await bcrypt.hash(u.password, 10);
+  await pool.query(
+    'INSERT INTO users(name, email, password_hash, role) VALUES($1, $2, $3, $4)',
+    [u.name, u.email, hash, u.role]
+  );
+  console.log(`Seeded user ${u.email} (${u.role})`);
+}
 
 async function main() {
   await pool.query(`
@@ -27,27 +51,8 @@ async function main() {
     );
   `);
 
-  const existing = await pool.query('SELECT id FROM users WHERE email = $1', [DEFAULT_ADMIN.email]);
-  if (existing.rows.length > 0) {
-    console.log(`Admin already exists (id=${existing.rows[0].id}), skipping seed.`);
-    const pwOk = await bcrypt.compare(DEFAULT_ADMIN.password, existing.rows[0].password_hash);
-    if (!pwOk) {
-      console.warn('Existing admin password mismatch with seed — re-hashing.');
-      const hash = await bcrypt.hash(DEFAULT_ADMIN.password, 10);
-      await pool.query('UPDATE users SET password_hash = $1 WHERE email = $2', [hash, DEFAULT_ADMIN.email]);
-      console.log('Admin password re-seeded.');
-    }
-    return;
-  }
+  for (const u of USERS) await upsertUser(u);
 
-  const password_hash = await bcrypt.hash(DEFAULT_ADMIN.password, 10);
-  const res = await pool.query(
-    'INSERT INTO users(name, email, password_hash, role) VALUES($1, $2, $3, $4) RETURNING id, name, email, role',
-    [DEFAULT_ADMIN.name, DEFAULT_ADMIN.email, password_hash, DEFAULT_ADMIN.role]
-  );
-  console.log('Seeded admin user:', res.rows[0]);
-
-  // Seed doctors if none
   const docCount = await pool.query('SELECT COUNT(*)::int AS n FROM doctors');
   if (Number(docCount.rows[0].n) === 0) {
     for (const d of DOCTORS) {

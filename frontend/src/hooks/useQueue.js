@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as queueService from '../services/queueService'
+import { getToken } from '../lib/auth'
 
-export function useQueue() {
+export function useQueue({ live = false } = {}) {
   const [queue, setQueue] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -13,7 +14,7 @@ export function useQueue() {
       const data = await queueService.getQueue()
       setQueue(data)
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.error || err.message)
     } finally {
       setLoading(false)
     }
@@ -22,6 +23,22 @@ export function useQueue() {
   useEffect(() => {
     load()
   }, [load])
+
+  // SSE: live refresh ketika ada perubahan antrian
+  useEffect(() => {
+    if (!live) return
+    const token = getToken()
+    if (!token) return
+    const url = `/api/queue/stream?token=${encodeURIComponent(token)}`
+    const source = new EventSource(url)
+    source.addEventListener('queue_update', () => load())
+    source.onerror = () => {
+      // biarkan server reconnect; tidak paksa refresh di sini
+    }
+    return () => {
+      source.close()
+    }
+  }, [live, load])
 
   const addPatient = useCallback(
     async (patientName) => {

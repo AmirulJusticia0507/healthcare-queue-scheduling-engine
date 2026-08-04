@@ -7,6 +7,11 @@ export async function getQueue() {
   return res.data
 }
 
+export async function getHistory(params) {
+  const res = await axios.get(`${API}/queue/history`, { params })
+  return res.data
+}
+
 export async function joinQueue(patientName) {
   const res = await axios.post(`${API}/queue`, { patientName })
   return res.data

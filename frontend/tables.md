@@ -2,7 +2,51 @@
 
 Dokumentasi struktur data untuk frontend: apa yang datang dari backend dan bagaimana menampilkannya.
 
-Base URL backend: `http://localhost:5000/api` (di dev lewat Vite proxy jadi `/api/...`).
+Base URL backend: `http://localhost:5000/api` (di dev lewat **Vite proxy** jadi `/api/...`).
+
+> Semua route kecuali `/api/auth/login` memerlukan header `Authorization: Bearer <JWT>`.
+> Frontend menyimpan token di `localStorage` dan axios menambahkannya otomatis.
+
+## 0. Auth
+
+**Endpoint:** `POST /api/auth/login`, `GET /api/auth/me`
+
+### Request POST `/api/auth/login`
+
+```json
+{ "email": "admin@health.id", "password": "admin123" }
+```
+
+### Response 200
+
+```json
+{
+  "user": { "id": 1, "name": "Admin", "email": "admin@health.id", "role": "admin" },
+  "token": "<jwt>"
+}
+```
+
+- Rate-limited: maks **5 percobaan / 15 menit** per IP. Response `429` berisi `retrySeconds`.
+- Akun demo: `admin@health.id`/`admin123` (role `admin`), `staff@health.id`/`staff123` (role `staff`).
+
+### Roles / perizinan
+
+| Role  | Lihat dokter | Tambah dokter | Lihat/skip/recall antrian | Riwayat |
+| ----- | ------------ | ------------- | ------------------------- | ------- |
+| admin | ✓            | ✓             | ✓                         | ✓       |
+| staff | ✓            | ✗             | ✓                         | ✓       |
+
+Frontend menyembunyikan form *Tambah Dokter* (beserta toast/peringatan) bila bukan admin.
+
+### SSE real-time
+
+`GET /api/queue/stream?token=<jwt>` — *Server-Sent Events*. Event `queue_update` dikirim saat ada
+pasien join/skip/recall. Frontend membuka `EventSource` di halaman Antrian & Dashboard lalu *refresh*.
+
+```js
+const source = new EventSource(`/api/queue/stream?token=${encodeURIComponent(token)}`)
+source.addEventListener('queue_update', () => reload())
+```
 
 ## 1. Doctors
 
@@ -189,6 +233,21 @@ Render + aksi (lihat `QueueTable.jsx`):
 | ------ | --------------------------- | ---------------------------------------- |
 | Skip   | `PATCH /api/queue/:id/skip` | Status jadi `skipped`, dokter otomatis dibebaskan |
 | Recall | `PATCH /api/queue/:id/recall` | Status kembali `waiting`               |
+
+### Endpoint tambahan (Queue)
+
+| Method | Endpoint               | Keterangan                                              | Auth         |
+| ------ | ---------------------- | ------------------------------------------------------ | ------------ |
+| GET    | `/api/queue/history`   | Semua entri (waiting/skipped/called/done), paginasi. Query: `status`, `q`, `page`, `limit` | butuh token  |
+| GET    | `/api/queue/stream`    | SSE live (`queue_update`). Token lewat query `?token=`.                 | butuh token  |
+
+Response `GET /api/queue/history`:
+
+```json
+{ "items": [...], "total": 12, "page": 1, "limit": 20, "totalPages": 1 }
+```
+
+
 
 ## 3. Map status
 

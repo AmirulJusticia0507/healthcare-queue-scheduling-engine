@@ -1,4 +1,5 @@
 const authService = require('./auth.service');
+const { resetLoginAttempts } = require('../../middleware/rateLimit');
 
 async function login(req, res) {
   try {
@@ -10,6 +11,7 @@ async function login(req, res) {
     if (!result) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+    resetLoginAttempts(req.ip);
     res.json({ user: result.user, token: result.token });
   } catch (err) {
     res.status(500).json({ error: err.message });

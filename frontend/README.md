@@ -61,6 +61,9 @@ export async function getQueue() {
 - Layout navbar + sidebar + footer (`AppLayout`)
 - Notifikasi toast untuk aksi join/skip/recall/tambah dokter
 - Dialog konfirmasi sebelum skip pasien
+- **Login + JWT** (`admin@health.id`/`admin123`, `staff@health.id`/`staff123`); route dilindungi, token otomatis
+- **Real-time** via SSE (`queue_update` pada join/skip/recall)
+- **Riwayat antrian** paginasi + filter status/nama (`/history`)
 
 ## Struktur proyek
 
@@ -85,14 +88,18 @@ frontend/
 
 ## Endpoint backend yang dipakai
 
-| Method | Endpoint                | Keterangan                      |
-| ------ | ----------------------- | ------------------------------- |
-| GET    | `/api/doctors`          | Daftar dokter                   |
-| POST   | `/api/doctors`          | Tambah dokter                   |
-| GET    | `/api/queue`            | Antrian + estimasi              |
-| POST   | `/api/queue`            | Pasien join antrian             |
-| PATCH  | `/api/queue/:id/skip`   | Skip pasien                     |
-| PATCH  | `/api/queue/:id/recall` | Recall pasien yang di-skip      |
+| Method | Endpoint                | Keterangan                      | Auth         |
+| ------ | ----------------------- | ------------------------------- | ------------ |
+| POST   | `/api/auth/login`       | Login, kirim JWT                | publik       |
+| GET    | `/api/auth/me`          | Profil user                     | butuh token  |
+| GET    | `/api/doctors`          | Daftar dokter                   | butuh token  |
+| POST   | `/api/doctors`          | Tambah dokter                   | admin only   |
+| GET    | `/api/queue`            | Antrian + estimasi              | butuh token  |
+| POST   | `/api/queue`            | Pasien join antrian             | butuh token  |
+| PATCH  | `/api/queue/:id/skip`   | Skip pasien                     | butuh token  |
+| PATCH  | `/api/queue/:id/recall` | Recall pasien yang di-skip      | butuh token  |
+| GET    | `/api/queue/history`    | Riwayat (paginated/filter)      | butuh token  |
+| GET    | `/api/queue/stream`     | SSE notifikasi live             | butuh token  |
 
 ## Build
 

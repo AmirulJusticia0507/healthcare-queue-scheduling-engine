@@ -5,6 +5,7 @@ import AppLayout from './layouts/AppLayout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import QueuePage from './pages/QueuePage'
+import HistoryPage from './pages/HistoryPage'
 import DoctorsPage from './pages/DoctorsPage'
 
 function AppRoutes() {
@@ -14,6 +15,7 @@ function AppRoutes() {
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/queue" element={<QueuePage />} />
+        <Route path="/history" element={<HistoryPage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
       </Route>
     </Routes>

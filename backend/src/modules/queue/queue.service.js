@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const { simulateQueue } = require('../../utils/queueEngine');
+const { publish } = require('../../utils/pubsub');
 
 const STATUS_WAITING = 'waiting';
 const STATUS_SKIPPED = 'skipped';
@@ -72,6 +73,7 @@ async function addQueueEntry(patientName) {
     [patientName]
   );
   await recalculateAvailability();
+  publish('queue_update', { action: 'join' });
   return res.rows[0];
 }
 
@@ -91,18 +93,64 @@ async function setPatientStatus(patientId, status) {
  * lewat perhitungan ulang.
  */
 async function skipPatient(patientId) {
-  return setPatientStatus(patientId, STATUS_SKIPPED);
+  const result = await setPatientStatus(patientId, STATUS_SKIPPED);
+  if (result) publish('queue_update', { action: 'skip', id: patientId });
+  return result;
 }
 
 /**
  * Recall pasien yang dilewati: kembali ke status 'waiting'.
  */
 async function recallPatient(patientId) {
-  return setPatientStatus(patientId, STATUS_WAITING);
+  const result = await setPatientStatus(patientId, STATUS_WAITING);
+  publish('queue_update', { action: 'recall', id: patientId });
+  return result;
+}
+
+/**
+ * Riwayat semua entri antrian (waiting/skipped/called/done) beserta paginasi & filter.
+ * query: { status?, page?, limit?, q? }  (q = filter nama pasien, case-insensitive)
+ */
+async function getHistory({ status, page = 1, limit = 20, q } = {}) {
+  const where = [];
+  const params = [];
+
+  if (status) {
+    params.push(status);
+    where.push(`status = $${params.length}`);
+  }
+  if (q) {
+    params.push(`%${q}%`);
+    where.push(`patient_name ILIKE $${params.length}`);
+  }
+
+  const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const offset = (Number(page) - 1) * Number(limit);
+
+  const listRes = await pool.query(
+    `SELECT * FROM queue_entries ${whereClause} ORDER BY created_at DESC, id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    [...params, Number(limit), offset]
+  );
+
+  const countRes = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM queue_entries ${whereClause}`,
+    params
+  );
+
+  const total = Number(countRes.rows[0].n);
+  const totalPages = Math.ceil(total / Number(limit)) || 1;
+  return {
+    items: listRes.rows,
+    total,
+    page: Number(page),
+    limit: Number(limit),
+    totalPages,
+  };
 }
 
 module.exports = {
   getQueueEntries,
+  getHistory,
   addQueueEntry,
   skipPatient,
   recallPatient,

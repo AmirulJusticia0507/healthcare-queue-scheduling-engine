@@ -35,6 +35,7 @@ export function AuthProvider({ children }) {
     const onLogout = () => {
       setUser(null)
       setLoading(false)
+      navigate('/login', { replace: true })
     }
     window.addEventListener('auth:logout', onLogout)
     return () => {

@@ -7,7 +7,7 @@ const btn =
   'inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors disabled:opacity-50'
 
 function QueuePage() {
-  const { queue, loading, error, addPatient, skip, recall, reload } = useQueue()
+  const { queue, loading, error, addPatient, skip, recall, reload } = useQueue({ live: true })
 
   const handleAddPatient = async (patientName) => {
     try {

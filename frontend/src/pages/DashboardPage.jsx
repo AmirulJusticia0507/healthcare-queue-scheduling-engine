@@ -13,7 +13,7 @@ function StatCard({ label, value, help, toneClass }) {
 }
 
 function DashboardPage() {
-  const { queue, loading: queueLoading } = useQueue()
+  const { queue, loading: queueLoading } = useQueue({ live: true })
   const { doctors, loading: doctorsLoading } = useDoctors()
 
   const waitingCount = queue.filter((p) => p.status === 'waiting').length

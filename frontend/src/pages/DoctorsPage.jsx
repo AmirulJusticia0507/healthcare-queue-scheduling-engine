@@ -2,12 +2,15 @@ import { useDoctors } from '../hooks/useDoctors'
 import DoctorsTable from '../components/DoctorsTable'
 import AddDoctorForm from '../components/AddDoctorForm'
 import { pushToast } from '../lib/toast'
+import { useAuth } from '../contexts/AuthContext'
 
 const btn =
   'inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors disabled:opacity-50'
 
 function DoctorsPage() {
   const { doctors, loading, error, createDoctor } = useDoctors()
+  const { user } = useAuth()
+  const canManage = user?.role === 'admin'
 
   const handleCreateDoctor = async (name, avgConsultTime) => {
     try {
@@ -20,7 +23,7 @@ function DoctorsPage() {
     } catch (err) {
       pushToast({
         title: 'Gagal Tambah Dokter',
-        description: err.message,
+        description: err.response?.data?.error || err.message,
         type: 'error',
       })
     }
@@ -45,7 +48,14 @@ function DoctorsPage() {
         </div>
       )}
 
-      <AddDoctorForm onSubmit={handleCreateDoctor} loading={loading} />
+      {canManage ? (
+        <AddDoctorForm onSubmit={handleCreateDoctor} loading={loading} />
+      ) : (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md px-3 py-2">
+          Hanya admin yang dapat menambah dokter. Anda login sebagai <strong>{user?.role}</strong>.
+        </div>
+      )}
+
       <DoctorsTable doctors={doctors} loading={loading} />
     </div>
   )
