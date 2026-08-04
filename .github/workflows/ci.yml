@@ -27,9 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - name: Build & start compose
+      - name: Start DB only
+        run: docker compose up -d db --wait --wait-timeout 60
+      - name: Run migration
+        run: docker compose run --rm -e DB_HOST=db -e DB_PORT=5432 backend node db/migrate.js
+      - name: Build & start full compose
         run: |
-          docker compose build
           docker compose up -d --wait --wait-timeout 120
           sleep 15
       - name: Smoke test API (frontend :5174 nginx -> backend)
