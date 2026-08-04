@@ -12,6 +12,13 @@ const DOCTORS = [
   { name: 'Dr. Andi', avg_consult_time: 10 },
 ];
 
+// Sample patients with external_id matching testDNA seed
+const PATIENTS = [
+  { name: 'Budi Santoso', patient_external_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', clinic_id: 1 },
+  { name: 'Siti Rahayu', patient_external_id: 'b2c3d4e5-f6a7-8901-bcde-f23456789012', clinic_id: 1 },
+  { name: 'Ahmad Wijaya', patient_external_id: 'c3d4e5f6-a7b8-9012-cdef-345678901234', clinic_id: 1 },
+];
+
 async function upsertUser(u) {
   const existing = await pool.query(
     'SELECT id, password_hash FROM users WHERE email = $1',
@@ -77,11 +84,25 @@ async function main() {
   const docCount = await pool.query('SELECT COUNT(*)::int AS n FROM doctors');
   if (Number(docCount.rows[0].n) === 0) {
     for (const d of DOCTORS) {
-      await pool.query('INSERT INTO doctors(name, avg_consult_time) VALUES($1, $2)', [d.name, d.avg_consult_time]);
+      await pool.query('INSERT INTO doctors(name, avg_consult_time, clinic_id) VALUES($1, $2, $3)', [d.name, d.avg_consult_time, clinicId]);
     }
     console.log('Seeded doctors:', DOCTORS.length);
   } else {
     console.log('Doctors already present, skipping.');
+  }
+
+  // Seed patients with external_id for DNA bridge
+  for (const p of PATIENTS) {
+    const existing = await pool.query('SELECT id FROM queue_entries WHERE patient_external_id = $1', [p.patient_external_id]);
+    if (existing.rows.length === 0) {
+      await pool.query(
+        'INSERT INTO queue_entries(patient_name, patient_external_id, clinic_id, status) VALUES($1, $2, $3, $4)',
+        [p.name, p.patient_external_id, p.clinic_id, 'waiting']
+      );
+      console.log(`Seeded patient: ${p.name} (external_id: ${p.patient_external_id})`);
+    } else {
+      console.log(`Patient with external_id ${p.patient_external_id} already exists, skipping.`);
+    }
   }
 }
 
