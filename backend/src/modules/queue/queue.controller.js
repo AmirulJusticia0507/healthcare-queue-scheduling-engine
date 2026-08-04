@@ -75,8 +75,8 @@ async function recallPatient(req, res) {
 }
 
 /**
- * GET /api/queue/history?status=...&page=1&limit=20&q=...
- * Riwayat semua entri (bisa filter status & nama) dengan paginasi.
+ * GET /api/queue/history
+ * ...
  */
 async function getHistory(req, res) {
   try {
@@ -91,6 +91,57 @@ async function getHistory(req, res) {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+}
+
+/**
+ * GET /api/queue/history.csv?status=...&q=...
+ * Export riwayat antrian dalam format CSV.
+ */
+async function exportHistoryCsv(req, res) {
+  try {
+    const { status, q } = req.query;
+    const csv = await queueService.getHistoryCsv({ status, q });
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="queue-history.csv"`);
+    res.status(200).send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+/**
+ * GET /api/queue/current (publik, tanpa auth)
+ * Queue yang sedang menunggu — untuk tampilan TV/display.
+ */
+async function getCurrentPublic(req, res) {
+  try {
+    const queue = await queueService.getCurrentPublic();
+    res.json(queue);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+/**
+ * GET /api/queue/public-stream (SSE, publik)
+ * Sama seperti /stream tapi tidak butuh token — untuk display TV.
+ */
+function streamPublic(req, res) {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const unsubscribe = subscribe(res);
+  const heartbeat = setInterval(() => {
+    res.write(': ping\n\n');
+  }, 15000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+    res.end();
+  });
 }
 
 /**
@@ -129,5 +180,8 @@ module.exports = {
   skipPatient,
   recallPatient,
   getHistory,
+  exportHistoryCsv,
+  getCurrentPublic,
   stream,
+  streamPublic,
 };

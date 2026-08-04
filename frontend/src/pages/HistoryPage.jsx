@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import StatusBadge from '../components/StatusBadge'
 import { useHistory } from '../hooks/useHistory'
+import { downloadHistoryCsv } from '../services/queueService'
+import { pushToast } from '../lib/toast'
 
 const STATUS_FILTERS = [{ value: '', label: 'Semua' }, { value: 'waiting', label: 'Waiting' }, { value: 'skipped', label: 'Skipped' }, { value: 'called', label: 'Called' }, { value: 'done', label: 'Done' }]
 
@@ -53,7 +55,22 @@ function HistoryPage() {
         </div>
         <div>
           <button onClick={reload} disabled={loading} className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 bg-white">
-            Muat Ulang
+            {loading ? 'Memuat...' : 'Muat Ulang'}
+          </button>
+        </div>
+        <div>
+          <button
+            onClick={async () => {
+              try {
+                await downloadHistoryCsv({ status, q })
+                pushToast({ title: 'Export CSV', description: 'queue-history.csv diunduh', type: 'success' })
+              } catch (err) {
+                pushToast({ title: 'Export Gagal', description: err.message, type: 'error' })
+              }
+            }}
+            className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
+          >
+            Export CSV
           </button>
         </div>
       </div>

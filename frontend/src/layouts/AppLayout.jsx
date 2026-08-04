@@ -24,6 +24,18 @@ function Navbar() {
         {user && (
           <div className="flex items-center gap-2 text-sm">
             <span className="hidden sm:inline">{user.name || user.email}</span>
+            {user.role === 'admin' && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 rounded">admin</span>
+            )}
+            <a
+              href="/tv"
+              target="_blank"
+              rel="noreferrer"
+              className="px-2 py-1 text-[10px] font-medium rounded border border-white/30 hover:bg-white/10"
+              title="Buka tampilan TV (tanpa login)"
+            >
+              TV
+            </a>
             <button
               type="button"
               onClick={logout}

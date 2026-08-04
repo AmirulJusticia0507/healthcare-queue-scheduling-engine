@@ -137,7 +137,7 @@ async function getHistory({ status, page = 1, limit = 20, q } = {}) {
     params
   );
 
-  const total = Number(countRes.rows[0].n);
+const total = Number(countRes.rows[0].n);
   const totalPages = Math.ceil(total / Number(limit)) || 1;
   return {
     items: listRes.rows,
@@ -148,9 +148,50 @@ async function getHistory({ status, page = 1, limit = 20, q } = {}) {
   };
 }
 
+/**
+ * Queue aktif yang sama — tapi untuk endpoint publik (TV/display).
+ * Read-only: hanya mengembalikan daftar waiting + estimate (tanpa rahasia).
+ */
+async function getCurrentPublic() {
+  return getQueueEntries();
+}
+
+/**
+ * Export riwayat ke CSV (semua entri yang cocok filter). 
+ */
+async function getHistoryCsv({ status, q } = {}) {
+  const where = [];
+  const params = [];
+  if (status) {
+    params.push(status);
+    where.push(`status = $${params.length}`);
+  }
+  if (q) {
+    params.push(`%${q}%`);
+    where.push(`patient_name ILIKE $${params.length}`);
+  }
+  const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const res = await pool.query(
+    `SELECT id, patient_name, status, joined_at, created_at FROM queue_entries ${whereClause} ORDER BY created_at ASC, id ASC`,
+    params
+  );
+
+  const esc = (v) => {
+    const s = v == null ? '' : String(v);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  let csv = 'id,patient_name,status,joined_at,created_at';
+  for (const r of res.rows) {
+    csv += `\n${esc(r.id)},${esc(r.patient_name)},${esc(r.status)},${esc(r.joined_at)},${esc(r.created_at)}`;
+  }
+  return csv;
+}
+
 module.exports = {
   getQueueEntries,
+  getCurrentPublic,
   getHistory,
+  getHistoryCsv,
   addQueueEntry,
   skipPatient,
   recallPatient,

@@ -8,10 +8,13 @@ import QueuePage from './pages/QueuePage'
 import HistoryPage from './pages/HistoryPage'
 import DoctorsPage from './pages/DoctorsPage'
 
+import TvPage from './pages/TvPage'
+
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/tv" element={<TvPage />} />
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/queue" element={<QueuePage />} />
