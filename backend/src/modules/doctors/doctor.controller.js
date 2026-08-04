@@ -10,11 +10,21 @@ async function getDoctors(req, res) {
   }
 }
 
+async function getDoctorByExternalId(req, res) {
+  try {
+    const doctor = await doctorService.getDoctorByExternalId(req.params.externalId);
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+    res.json(doctor);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function addDoctor(req, res) {
   try {
-    const { name, avgConsultTime, clinic_id } = req.body;
+    const { name, avgConsultTime, clinic_id, external_id } = req.body;
     const clinicId = Number(clinic_id) || Number(req.query.clinic) || 1;
-    const doctor = await doctorService.createDoctor(name, avgConsultTime, clinicId);
+    const doctor = await doctorService.createDoctor(name, avgConsultTime, clinicId, external_id || null);
     res.status(201).json(doctor);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -23,5 +33,6 @@ async function addDoctor(req, res) {
 
 module.exports = {
   getDoctors,
+  getDoctorByExternalId,
   addDoctor,
 };

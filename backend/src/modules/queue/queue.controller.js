@@ -110,6 +110,18 @@ async function getPatient(req, res) {
   }
 }
 
+async function setDoctorId(req, res) {
+  try {
+    const { doctorId } = req.body;
+    if (!doctorId) return res.status(400).json({ error: 'doctorId required' });
+    const entry = await queueService.setDoctorId(req.params.id, doctorId);
+    if (!entry) return res.status(404).json({ error: 'Patient not found' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 /**
  * GET /api/queue/history
  * ...
@@ -221,6 +233,7 @@ module.exports = {
   recallPatient,
   setPatientExternalId,
   setClinicalNotes,
+  setDoctorId,
   getPatientByExternalId,
   getPatient,
   getHistory,

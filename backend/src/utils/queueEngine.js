@@ -5,7 +5,7 @@
  * queue:   array pasien waiting, urut dari yang paling lama join
  *
  * Mengembalikan:
- * - updatedQueue: pasien + estimatedTime (menit) + assignedDoctor
+ * - updatedQueue: pasien + estimatedTime (menit) + assignedDoctor (termasuk doctor_id)
  * - doctorStates: state dokter terbaru (availableAt dalam ms) setelah simulasi
  */
 function simulateQueue(doctors, queue, now = Date.now()) {
@@ -31,6 +31,7 @@ function simulateQueue(doctors, queue, now = Date.now()) {
       assignedDoctor: {
         id: assignedDoctor.id,
         name: assignedDoctor.name,
+        doctor_id: assignedDoctor.id,
         availableAt
       }
     };

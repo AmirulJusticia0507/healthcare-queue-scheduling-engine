@@ -41,8 +41,17 @@ async function persistDoctorAvailability(clinicId, doctorStates) {
 async function recalculateAvailability(clinicId) {
   const [doctors, queue] = await Promise.all([getDoctorsByClinic(clinicId), getWaitingQueue(clinicId)]);
   const now = Date.now();
-  const { doctorStates } = simulateQueue(getBaselineDoctors(doctors, now), queue, now);
+  const { updatedQueue, doctorStates } = simulateQueue(getBaselineDoctors(doctors, now), queue, now);
   await persistDoctorAvailability(clinicId, doctorStates);
+  // persist doctor_id assignment for each waiting patient
+  for (const patient of updatedQueue) {
+    if (patient.assignedDoctor && patient.assignedDoctor.doctor_id) {
+      await pool.query(
+        'UPDATE queue_entries SET doctor_id = $1 WHERE id = $2',
+        [patient.assignedDoctor.doctor_id, patient.id]
+      );
+    }
+  }
 }
 
 /**
@@ -133,6 +142,17 @@ async function getPatient(id) {
   return res.rows[0];
 }
 
+async function setDoctorId(patientId, doctorId) {
+  const res = await pool.query(
+    'UPDATE queue_entries SET doctor_id = $1 WHERE id = $2 RETURNING *',
+    [doctorId, patientId]
+  );
+  if (res.rows.length > 0) {
+    publish('queue_update', { action: 'assign_doctor', id: patientId, doctorId });
+  }
+  return res.rows[0];
+}
+
 /**
  * Riwayat semua entri antrian (waiting/skipped/called/done) beserta paginasi & filter.
  * query: { status?, page?, limit?, q? }  (q = filter nama pasien, case-insensitive)
@@ -216,6 +236,7 @@ module.exports = {
   recallPatient,
   setPatientExternalId,
   setClinicalNotes,
+  setDoctorId,
   getPatientByExternalId,
   getPatient,
   clinicOf,

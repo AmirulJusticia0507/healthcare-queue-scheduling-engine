@@ -13,6 +13,7 @@ router.patch('/:id/recall', queueController.recallPatient);
 // DNA Bridge endpoints
 router.patch('/:id/external-id', queueController.setPatientExternalId);
 router.patch('/:id/notes', queueController.setClinicalNotes);
+router.patch('/:id/assign-doctor', queueController.setDoctorId);
 router.get('/external/:externalId', queueController.getPatientByExternalId);
 router.get('/:id', queueController.getPatient);
 

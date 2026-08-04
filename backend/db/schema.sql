@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS doctors (
   name VARCHAR(255) NOT NULL,
   avg_consult_time INT NOT NULL DEFAULT 15, -- in minutes
   available_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- when doctor is free again
+  external_id VARCHAR(255), -- UUID bridge to DNA system
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -14,6 +15,7 @@ CREATE TABLE IF NOT EXISTS queue_entries (
   id SERIAL PRIMARY KEY,
   patient_name VARCHAR(255) NOT NULL,
   patient_external_id VARCHAR(255), -- UUID from DNA system
+  doctor_id INT, -- assigned doctor (persisted)
   clinical_notes TEXT, -- Doctor's clinical notes
   status VARCHAR(20) NOT NULL DEFAULT 'waiting',
   -- status values: waiting | skipped | called | done

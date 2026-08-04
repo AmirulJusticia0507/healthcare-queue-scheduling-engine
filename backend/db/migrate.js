@@ -61,6 +61,24 @@ async function up() {
     await pool.query(`ALTER TABLE queue_entries ADD COLUMN clinical_notes TEXT`);
     console.log('Added clinical_notes to queue_entries');
   }
+
+  // doctor_id for persistent doctor assignment
+  const doctorIdCols = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name='queue_entries' AND column_name='doctor_id'"
+  );
+  if (doctorIdCols.rows.length === 0) {
+    await pool.query(`ALTER TABLE queue_entries ADD COLUMN doctor_id INT`);
+    console.log('Added doctor_id to queue_entries');
+  }
+
+  // external_id for doctors (bridge to DNA system)
+  const doctorExtCols = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name='doctors' AND column_name='external_id'"
+  );
+  if (doctorExtCols.rows.length === 0) {
+    await pool.query(`ALTER TABLE doctors ADD COLUMN external_id VARCHAR(255)`);
+    console.log('Added external_id to doctors');
+  }
 }
 
 up()
