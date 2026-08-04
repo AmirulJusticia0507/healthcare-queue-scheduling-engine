@@ -1,5 +1,6 @@
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
 import Toasts from '../components/Toasts'
+import { useAuth } from '../contexts/AuthContext'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
@@ -8,14 +9,29 @@ const NAV_ITEMS = [
 ]
 
 function Navbar() {
+  const { user, logout } = useAuth()
   return (
     <header className="bg-brand-600 text-white shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-        <div className="bg-white text-brand-600 rounded-md px-2 py-1 font-bold text-sm">HQ</div>
-        <div>
-          <p className="font-semibold text-sm leading-tight">Healthcare Queue</p>
-          <p className="text-xs text-blue-100">Sistem Antrian Rumah Sakit</p>
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="bg-white text-brand-600 rounded-md px-2 py-1 font-bold text-sm">HQ</div>
+          <div>
+            <p className="font-semibold text-sm leading-tight">Healthcare Queue</p>
+            <p className="text-xs text-blue-100">Sistem Antrian Rumah Sakit</p>
+          </div>
         </div>
+        {user && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="hidden sm:inline">{user.name || user.email}</span>
+            <button
+              type="button"
+              onClick={logout}
+              className="px-2.5 py-1 text-xs font-medium rounded-md border border-white/30 hover:bg-white/10"
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )

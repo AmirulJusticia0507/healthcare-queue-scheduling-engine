@@ -1,18 +1,30 @@
 import { Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import RequireAuth from './components/RequireAuth'
 import AppLayout from './layouts/AppLayout'
+import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import QueuePage from './pages/QueuePage'
 import DoctorsPage from './pages/DoctorsPage'
 
-function App() {
+function AppRoutes() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/queue" element={<QueuePage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
       </Route>
     </Routes>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   )
 }
 

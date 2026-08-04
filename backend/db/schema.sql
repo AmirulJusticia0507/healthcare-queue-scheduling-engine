@@ -21,3 +21,19 @@ CREATE TABLE IF NOT EXISTS queue_entries (
 
 CREATE INDEX IF NOT EXISTS idx_queue_entries_status ON queue_entries (status);
 CREATE INDEX IF NOT EXISTS idx_queue_entries_joined_at ON queue_entries (joined_at);
+
+-- Authentication
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL, -- bcrypt hash
+  role VARCHAR(50) NOT NULL DEFAULT 'staff', -- admin | staff
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
+
+-- Seed (use db/seed.js to hash the password, or run this with a pre-computed bcrypt hash):
+-- INSERT INTO users (name, email, password_hash, role)
+-- VALUES ('Admin', 'admin@health.id', '$2a$10$<bcrypt-hash>', 'admin');
