@@ -2,25 +2,30 @@ import { useQueue } from '../hooks/useQueue'
 import QueueTable from '../components/QueueTable'
 import JoinQueueForm from '../components/JoinQueueForm'
 import { pushToast } from '../lib/toast'
+import * as queueService from '../services/queueService'
 
 const btn =
   'inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors disabled:opacity-50'
 
 function QueuePage() {
-  const { queue, loading, error, addPatient, skip, recall, reload } = useQueue({ live: true })
+  const { queue, loading, error, reload, skip, recall } = useQueue({ live: true })
 
   const handleAddPatient = async (patientName) => {
     try {
-      await addPatient(patientName)
+      const result = await queueService.joinQueueReturn(patientName)
+      await reload()
+      const idx = queue.findIndex((p) => p.id === result.entry?.id)
+      const number = idx >= 0 ? idx + 1 : queue.length + 1
+      queueService.printTicket(result.entry, number)
       pushToast({
         title: 'Masuk Antrian',
-        description: `${patientName} berhasil ditambahkan ke antrian`,
+        description: `${patientName} berhasil ditambahkan ke antrian (No. ${number})`,
         type: 'success',
       })
     } catch (err) {
       pushToast({
         title: 'Gagal Tambah Pasien',
-        description: err.message,
+        description: err.response?.data?.error || err.message,
         type: 'error',
       })
     }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as doctorService from '../services/doctorService'
 
-export function useDoctors() {
+export function useDoctors(clinicId) {
   const [doctors, setDoctors] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -10,14 +10,14 @@ export function useDoctors() {
     setLoading(true)
     setError(null)
     try {
-      const data = await doctorService.getDoctors()
+      const data = await doctorService.getDoctors(clinicId)
       setDoctors(data)
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.error || err.message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [clinicId])
 
   useEffect(() => {
     load()
@@ -25,7 +25,7 @@ export function useDoctors() {
 
   const createDoctor = useCallback(
     async (name, avgConsultTime) => {
-      await doctorService.addDoctor(name, avgConsultTime)
+      await doctorService.addDoctor(name, avgConsultTime, clinicId)
       await load()
     },
     [load]

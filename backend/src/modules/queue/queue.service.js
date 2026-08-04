@@ -4,24 +4,23 @@ const { publish } = require('../../utils/pubsub');
 
 const STATUS_WAITING = 'waiting';
 const STATUS_SKIPPED = 'skipped';
+const DEFAULT_CLINIC = 1;
 
-async function getWaitingQueue() {
+function clinicOf(req) {
+  const c = Number(req?.query?.clinic || req?.body?.clinic_id || DEFAULT_CLINIC);
+  return Number.isNaN(c) || c < 1 ? DEFAULT_CLINIC : c;
+}
+
+async function getDoctorsByClinic(clinicId) {
   const res = await pool.query(
-    'SELECT * FROM queue_entries WHERE status = $1 ORDER BY joined_at ASC, id ASC',
-    [STATUS_WAITING]
+    'SELECT * FROM doctors WHERE clinic_id = $1 ORDER BY id ASC',
+    [clinicId]
   );
   return res.rows;
 }
 
-async function getDoctors() {
-  const res = await pool.query('SELECT * FROM doctors ORDER BY id ASC');
-  return res.rows;
-}
-
 /**
- * Baseline: semua dokter dianggap free mulai sekarang.
- * available_at di DB hanya dipakai untuk tampilan, bukan sumber kebenaran
- * simulasi — sehingga hasil simulasi deterministik dan konsisten antar request.
+ * Baseline: semua dokter di klinik ini dianggap free mulai sekarang.
  */
 function getBaselineDoctors(doctors, now) {
   return doctors.map((d) => ({
@@ -30,50 +29,49 @@ function getBaselineDoctors(doctors, now) {
   }));
 }
 
-async function persistDoctorAvailability(doctorStates) {
+async function persistDoctorAvailability(clinicId, doctorStates) {
   for (const doctor of doctorStates) {
     await pool.query(
-      'UPDATE doctors SET available_at = $1 WHERE id = $2',
-      [new Date(doctor.availableAt).toISOString(), doctor.id]
+      'UPDATE doctors SET available_at = $1 WHERE id = $2 AND clinic_id = $3',
+      [new Date(doctor.availableAt).toISOString(), doctor.id, clinicId]
     );
   }
 }
 
-/**
- * Hitung ulang jadwal seluruh antrian lalu simpan available_at dokter ke DB.
- * Dipanggil setiap kali antrian berubah (join/skip/recall). Simulasi selalu
- * dimulai dari baseline "semua dokter free" supaya skip/recall otomatis
- * membebaskan slot dan hasilnya konsisten dengan GET.
- */
-async function recalculateAvailability() {
-  const [doctors, queue] = await Promise.all([getDoctors(), getWaitingQueue()]);
+async function recalculateAvailability(clinicId) {
+  const [doctors, queue] = await Promise.all([getDoctorsByClinic(clinicId), getWaitingQueue(clinicId)]);
   const now = Date.now();
   const { doctorStates } = simulateQueue(getBaselineDoctors(doctors, now), queue, now);
-  await persistDoctorAvailability(doctorStates);
+  await persistDoctorAvailability(clinicId, doctorStates);
 }
 
 /**
  * Ambil queue pasien waiting + estimatedTime + assignedDoctor.
- * Hanya simulasi (tanpa menulis), hasilnya sama dengan hitung ulang terakhir
- * selama antrian tidak berubah.
  */
-async function getQueueEntries() {
-  const [doctors, queue] = await Promise.all([getDoctors(), getWaitingQueue()]);
+async function getQueueEntries(clinicId) {
+  clinicId = clinicId || DEFAULT_CLINIC;
+  const [doctors, queue] = await Promise.all([getDoctorsByClinic(clinicId), getWaitingQueue(clinicId)]);
   const now = Date.now();
   const { updatedQueue } = simulateQueue(getBaselineDoctors(doctors, now), queue, now);
   return updatedQueue;
 }
 
-/**
- * Tambah pasien ke queue, lalu hitung ulang jadwal dokter.
- */
-async function addQueueEntry(patientName) {
+async function getWaitingQueue(clinicId) {
   const res = await pool.query(
-    'INSERT INTO queue_entries(patient_name) VALUES($1) RETURNING *',
-    [patientName]
+    'SELECT * FROM queue_entries WHERE status = $1 AND clinic_id = $2 ORDER BY joined_at ASC, id ASC',
+    [STATUS_WAITING, clinicId]
   );
-  await recalculateAvailability();
-  publish('queue_update', { action: 'join' });
+  return res.rows;
+}
+
+async function addQueueEntry(patientName, clinicId) {
+  clinicId = clinicId || DEFAULT_CLINIC;
+  const res = await pool.query(
+    'INSERT INTO queue_entries(patient_name, clinic_id) VALUES($1, $2) RETURNING *',
+    [patientName, clinicId]
+  );
+  await recalculateAvailability(clinicId);
+  publish('queue_update', { action: 'join', clinicId });
   return res.rows[0];
 }
 
@@ -83,24 +81,17 @@ async function setPatientStatus(patientId, status) {
     [status, patientId]
   );
   if (res.rows.length > 0) {
-    await recalculateAvailability();
+    await recalculateAvailability(res.rows[0].clinic_id);
   }
   return res.rows[0];
 }
 
-/**
- * Skip pasien: status jadi 'skipped', slot dokter otomatis dibebaskan
- * lewat perhitungan ulang.
- */
 async function skipPatient(patientId) {
   const result = await setPatientStatus(patientId, STATUS_SKIPPED);
-  if (result) publish('queue_update', { action: 'skip', id: patientId });
+  if (result) publish('queue_update', { action: 'skip', id: patientId, clinicId: result.clinic_id });
   return result;
 }
 
-/**
- * Recall pasien yang dilewati: kembali ke status 'waiting'.
- */
 async function recallPatient(patientId) {
   const result = await setPatientStatus(patientId, STATUS_WAITING);
   publish('queue_update', { action: 'recall', id: patientId });
@@ -111,9 +102,10 @@ async function recallPatient(patientId) {
  * Riwayat semua entri antrian (waiting/skipped/called/done) beserta paginasi & filter.
  * query: { status?, page?, limit?, q? }  (q = filter nama pasien, case-insensitive)
  */
-async function getHistory({ status, page = 1, limit = 20, q } = {}) {
-  const where = [];
-  const params = [];
+async function getHistory({ clinicId, status, page = 1, limit = 20, q } = {}) {
+  clinicId = clinicId || DEFAULT_CLINIC;
+  const where = ['clinic_id = $1'];
+  const params = [clinicId];
 
   if (status) {
     params.push(status);
@@ -124,7 +116,7 @@ async function getHistory({ status, page = 1, limit = 20, q } = {}) {
     where.push(`patient_name ILIKE $${params.length}`);
   }
 
-  const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const whereClause = `WHERE ${where.join(' AND ')}`;
   const offset = (Number(page) - 1) * Number(limit);
 
   const listRes = await pool.query(
@@ -137,7 +129,7 @@ async function getHistory({ status, page = 1, limit = 20, q } = {}) {
     params
   );
 
-const total = Number(countRes.rows[0].n);
+  const total = Number(countRes.rows[0].n);
   const totalPages = Math.ceil(total / Number(limit)) || 1;
   return {
     items: listRes.rows,
@@ -148,20 +140,10 @@ const total = Number(countRes.rows[0].n);
   };
 }
 
-/**
- * Queue aktif yang sama — tapi untuk endpoint publik (TV/display).
- * Read-only: hanya mengembalikan daftar waiting + estimate (tanpa rahasia).
- */
-async function getCurrentPublic() {
-  return getQueueEntries();
-}
-
-/**
- * Export riwayat ke CSV (semua entri yang cocok filter). 
- */
-async function getHistoryCsv({ status, q } = {}) {
-  const where = [];
-  const params = [];
+async function getHistoryCsv({ clinicId, status, q } = {}) {
+  clinicId = clinicId || DEFAULT_CLINIC;
+  const where = ['clinic_id = $1'];
+  const params = [clinicId];
   if (status) {
     params.push(status);
     where.push(`status = $${params.length}`);
@@ -170,7 +152,8 @@ async function getHistoryCsv({ status, q } = {}) {
     params.push(`%${q}%`);
     where.push(`patient_name ILIKE $${params.length}`);
   }
-  const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const whereClause = `WHERE ${where.join(' AND ')}`;
+
   const res = await pool.query(
     `SELECT id, patient_name, status, joined_at, created_at FROM queue_entries ${whereClause} ORDER BY created_at ASC, id ASC`,
     params
@@ -189,10 +172,13 @@ async function getHistoryCsv({ status, q } = {}) {
 
 module.exports = {
   getQueueEntries,
-  getCurrentPublic,
+  getWaitingQueue,
+  getCurrentPublic: getQueueEntries,
   getHistory,
   getHistoryCsv,
   addQueueEntry,
   skipPatient,
   recallPatient,
+  clinicOf,
+  DEFAULT_CLINIC,
 };

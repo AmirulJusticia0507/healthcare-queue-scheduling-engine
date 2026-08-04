@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const queueController = require('./queue.controller');
 
-// Protected routes (verifyToken applied at app.js level)
 router.get('/', queueController.getQueue);
 router.post('/', queueController.joinQueue);
 router.get('/history', queueController.getHistory);

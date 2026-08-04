@@ -1,14 +1,14 @@
 import { Routes, Route } from 'react-router-dom'
+import { ClinicProvider } from './contexts/ClinicContext'
 import { AuthProvider } from './contexts/AuthContext'
 import RequireAuth from './components/RequireAuth'
 import AppLayout from './layouts/AppLayout'
 import LoginPage from './pages/LoginPage'
+import TvPage from './pages/TvPage'
 import DashboardPage from './pages/DashboardPage'
 import QueuePage from './pages/QueuePage'
 import HistoryPage from './pages/HistoryPage'
 import DoctorsPage from './pages/DoctorsPage'
-
-import TvPage from './pages/TvPage'
 
 function AppRoutes() {
   return (
@@ -27,9 +27,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ClinicProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ClinicProvider>
   )
 }
 

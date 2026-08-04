@@ -2,40 +2,31 @@ const queueService = require('./queue.service');
 const { JWT_SECRET } = require('../auth/auth.service');
 const jwt = require('jsonwebtoken');
 const { subscribe } = require('../../utils/pubsub');
+const { clinicOf, DEFAULT_CLINIC } = require('./queue.service');
 
-/**
- * GET /api/queue
- * Ambil queue pasien lengkap dengan assignedDoctor + estimatedTime
- */
 async function getQueue(req, res) {
   try {
-    const queue = await queueService.getQueueEntries();
+    const clinicId = clinicOf(req);
+    const queue = await queueService.getQueueEntries(clinicId);
     res.json(queue);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
 
-/**
- * POST /api/queue
- * Tambah pasien baru dan return data pasien dengan assignedDoctor + estimatedTime
- */
 async function joinQueue(req, res) {
   try {
-    const { patientName } = req.body;
+    const { patientName, clinic_id } = req.body;
+    const clinicId = Number(clinic_id) || DEFAULT_CLINIC;
 
-    // tambah pasien
-    const entry = await queueService.addQueueEntry(patientName);
+    const entry = await queueService.addQueueEntry(patientName, clinicId);
 
-    // ambil seluruh queue lagi untuk hitung assignedDoctor + estimatedTime
-    const queue = await queueService.getQueueEntries();
-
-    // cari pasien yang baru saja ditambahkan
-    const patientWithEstimate = queue.find(p => p.id === entry.id);
+    const queue = await queueService.getQueueEntries(clinicId);
+    const patientWithEstimate = queue.find((p) => p.id === entry.id);
 
     res.status(201).json({
       entry: patientWithEstimate,
-      estimatedTime: patientWithEstimate.estimatedTime
+      estimatedTime: patientWithEstimate ? patientWithEstimate.estimatedTime : 0,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -81,7 +72,9 @@ async function recallPatient(req, res) {
 async function getHistory(req, res) {
   try {
     const { status, page, limit, q } = req.query;
+    const clinicId = clinicOf(req);
     const data = await queueService.getHistory({
+      clinicId,
       status,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,
@@ -100,7 +93,8 @@ async function getHistory(req, res) {
 async function exportHistoryCsv(req, res) {
   try {
     const { status, q } = req.query;
-    const csv = await queueService.getHistoryCsv({ status, q });
+    const clinicId = clinicOf(req);
+    const csv = await queueService.getHistoryCsv({ clinicId, status, q });
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="queue-history.csv"`);
     res.status(200).send(csv);
@@ -115,7 +109,8 @@ async function exportHistoryCsv(req, res) {
  */
 async function getCurrentPublic(req, res) {
   try {
-    const queue = await queueService.getCurrentPublic();
+    const clinicId = clinicOf(req);
+    const queue = await queueService.getCurrentPublic(clinicId);
     res.json(queue);
   } catch (err) {
     res.status(500).json({ error: err.message });

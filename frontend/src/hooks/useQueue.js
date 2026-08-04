@@ -2,23 +2,24 @@ import { useCallback, useEffect, useState } from 'react'
 import * as queueService from '../services/queueService'
 import { getToken } from '../lib/auth'
 
-export function useQueue({ live = false } = {}) {
+export function useQueue({ clinicId, live = false } = {}) {
   const [queue, setQueue] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   const load = useCallback(async () => {
+    if (!clinicId) return
     setLoading(true)
     setError(null)
     try {
-      const data = await queueService.getQueue()
+      const data = await queueService.getQueue(clinicId)
       setQueue(data)
     } catch (err) {
       setError(err.response?.data?.error || err.message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [clinicId])
 
   useEffect(() => {
     load()
@@ -28,12 +29,11 @@ export function useQueue({ live = false } = {}) {
   useEffect(() => {
     if (!live) return
     const token = getToken()
-    if (!token) return
-    const url = `/api/queue/stream?token=${encodeURIComponent(token)}`
+    const url = `/api/queue/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`
     const source = new EventSource(url)
     source.addEventListener('queue_update', () => load())
     source.onerror = () => {
-      // biarkan server reconnect; tidak paksa refresh di sini
+      // biarkan server reconnect
     }
     return () => {
       source.close()
@@ -42,10 +42,12 @@ export function useQueue({ live = false } = {}) {
 
   const addPatient = useCallback(
     async (patientName) => {
-      await queueService.joinQueue(patientName)
+      if (!clinicId) return
+      const result = await queueService.joinQueueReturn(patientName, clinicId)
       await load()
+      return result
     },
-    [load]
+    [load, clinicId]
   )
 
   const skip = useCallback(

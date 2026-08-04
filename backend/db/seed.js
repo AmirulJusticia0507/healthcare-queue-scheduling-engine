@@ -51,6 +51,27 @@ async function main() {
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clinics (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      code VARCHAR(50) NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  // Seed default clinic
+  const c = await pool.query('SELECT id FROM clinics WHERE code = $1', ['general']);
+  let clinicId = c.rows[0]?.id;
+  if (!clinicId) {
+    const inserted = await pool.query(
+      'INSERT INTO clinics(name, code) VALUES($1, $2) RETURNING id',
+      ['Umum', 'general']
+    );
+    clinicId = inserted.rows[0].id;
+    console.log(`Seeded clinic: Umum (id=${clinicId})`);
+  }
+
   for (const u of USERS) await upsertUser(u);
 
   const docCount = await pool.query('SELECT COUNT(*)::int AS n FROM doctors');

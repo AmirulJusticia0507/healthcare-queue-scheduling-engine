@@ -34,6 +34,18 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 
+-- Multi-clinic
+CREATE TABLE IF NOT EXISTS clinics (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  code VARCHAR(50) UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Clinic scoping (added later via db/migrate.js; declared here for fresh builds)
+-- ALTER TABLE doctors ADD COLUMN clinic_id INT NOT NULL DEFAULT 1 REFERENCES clinics(id);
+-- ALTER TABLE queue_entries ADD COLUMN clinic_id INT NOT NULL DEFAULT 1 REFERENCES clinics(id);
+
 -- Seed (use db/seed.js to hash the password, or run this with a pre-computed bcrypt hash):
 -- INSERT INTO users (name, email, password_hash, role)
 -- VALUES ('Admin', 'admin@health.id', '$2a$10$<bcrypt-hash>', 'admin');
