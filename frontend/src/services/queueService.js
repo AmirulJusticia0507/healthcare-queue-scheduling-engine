@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { API_BASE } from '../config'
 
-const API = '/api'
+const API = API_BASE
 
 export async function getQueue(clinicId) {
   const res = await axios.get(`${API}/queue`, { params: { clinic: clinicId } })

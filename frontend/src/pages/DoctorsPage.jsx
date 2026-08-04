@@ -1,4 +1,5 @@
 import { useDoctors } from '../hooks/useDoctors'
+import { useClinic } from '../contexts/ClinicContext'
 import DoctorsTable from '../components/DoctorsTable'
 import AddDoctorForm from '../components/AddDoctorForm'
 import { pushToast } from '../lib/toast'
@@ -8,7 +9,8 @@ const btn =
   'inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors disabled:opacity-50'
 
 function DoctorsPage() {
-  const { doctors, loading, error, createDoctor } = useDoctors()
+  const { clinicId } = useClinic()
+  const { doctors, loading, error, createDoctor } = useDoctors(clinicId)
   const { user } = useAuth()
   const canManage = user?.role === 'admin'
 

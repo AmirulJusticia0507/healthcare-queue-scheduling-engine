@@ -1,4 +1,5 @@
 import { useQueue } from '../hooks/useQueue'
+import { useClinic } from '../contexts/ClinicContext'
 import QueueTable from '../components/QueueTable'
 import JoinQueueForm from '../components/JoinQueueForm'
 import { pushToast } from '../lib/toast'
@@ -8,15 +9,16 @@ const btn =
   'inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors disabled:opacity-50'
 
 function QueuePage() {
-  const { queue, loading, error, reload, skip, recall } = useQueue({ live: true })
+  const { clinicId } = useClinic()
+  const { queue, loading, error, addPatient, reload, skip, recall } = useQueue({ clinicId, live: true })
 
   const handleAddPatient = async (patientName) => {
     try {
-      const result = await queueService.joinQueueReturn(patientName)
+      const result = await addPatient(patientName)
       await reload()
-      const idx = queue.findIndex((p) => p.id === result.entry?.id)
+      const idx = queue.findIndex((p) => p.id === result?.entry?.id)
       const number = idx >= 0 ? idx + 1 : queue.length + 1
-      queueService.printTicket(result.entry, number)
+      queueService.printTicket(result?.entry, number)
       pushToast({
         title: 'Masuk Antrian',
         description: `${patientName} berhasil ditambahkan ke antrian (No. ${number})`,

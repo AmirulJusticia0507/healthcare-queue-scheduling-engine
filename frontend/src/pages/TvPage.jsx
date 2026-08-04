@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { useSearchParams } from 'react-router-dom'
+import { API_BASE } from '../config'
 
-function fetchQueue() {
-  return axios.get('/api/queue/current').then((r) => r.data)
+function fetchQueue(clinicId) {
+  return axios.get(`${API_BASE}/queue/current`, { params: { clinic: clinicId } }).then((r) => r.data)
 }
 
 function TvPage() {
+  const [searchParams] = useSearchParams()
   const [queue, setQueue] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const now = new Date()
   const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  const clinicId = Number(searchParams.get('clinic')) || 1
 
   useEffect(() => {
     let source
     const load = async () => {
       try {
-        const data = await fetchQueue()
+        const data = await fetchQueue(clinicId)
         setQueue(data)
         setError(null)
       } catch (err) {
@@ -28,7 +32,7 @@ function TvPage() {
     load()
 
     // Public SSE (tanpa auth) — auto refresh saat antrian berubah
-    source = new EventSource('/api/queue/public-stream')
+    source = new EventSource(`${API_BASE}/queue/public-stream`)
     source.addEventListener('queue_update', () => load())
     source.onerror = (e) => {
       console.error('sse error', e)
@@ -39,7 +43,7 @@ function TvPage() {
       clearInterval(interval)
       if (source) source.close()
     }
-  }, [])
+  }, [clinicId])
 
   if (error) {
     return (
@@ -86,7 +90,7 @@ function TvPage() {
           </table>
         )}
 
-        <p className="mt-8 text-xs text-gray-500">Live — refresh otomatis via SSE (http://localhost:5174/tv)</p>
+        <p className="mt-8 text-xs text-gray-500">Live — refresh otomatis via SSE</p>
       </div>
     </div>
   )

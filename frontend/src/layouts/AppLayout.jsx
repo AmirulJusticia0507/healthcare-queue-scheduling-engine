@@ -1,6 +1,27 @@
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
 import Toasts from '../components/Toasts'
 import { useAuth } from '../contexts/AuthContext'
+import { useClinic } from '../contexts/ClinicContext'
+
+function ClinicSwitcher() {
+  const { clinics, clinicId, switchClinic, loading } = useClinic()
+  if (!clinics.length) return null
+  return (
+    <label className="flex items-center gap-1 text-xs">
+      <span className="text-blue-100">Klinik:</span>
+      <select
+        value={clinicId}
+        onChange={(e) => switchClinic(Number(e.target.value))}
+        disabled={loading}
+        className="text-xs rounded border border-white/30 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-blue-300"
+      >
+        {clinics.map((c) => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
@@ -24,18 +45,19 @@ function Navbar() {
         {user && (
           <div className="flex items-center gap-2 text-sm">
             <span className="hidden sm:inline">{user.name || user.email}</span>
+            <ClinicSwitcher />
             {user.role === 'admin' && (
               <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 rounded">admin</span>
             )}
-            <a
-              href="/tv"
+            <RouterLink
+              to="/tv"
               target="_blank"
               rel="noreferrer"
               className="px-2 py-1 text-[10px] font-medium rounded border border-white/30 hover:bg-white/10"
               title="Buka tampilan TV (tanpa login)"
             >
               TV
-            </a>
+            </RouterLink>
             <button
               type="button"
               onClick={logout}

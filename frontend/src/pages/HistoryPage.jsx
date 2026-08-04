@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import StatusBadge from '../components/StatusBadge'
 import { useHistory } from '../hooks/useHistory'
+import { useClinic } from '../contexts/ClinicContext'
 import { downloadHistoryCsv } from '../services/queueService'
 import { pushToast } from '../lib/toast'
 
@@ -10,7 +11,8 @@ function HistoryPage() {
   const [status, setStatus] = useState('')
   const [q, setQ] = useState('')
 
-  const { items, total, totalPages, page, limit, loading, error, reload, goToPage } = useHistory({ status, q })
+  const { clinicId } = useClinic()
+  const { items, total, totalPages, page, limit, loading, error, reload, goToPage } = useHistory({ clinicId, status, q })
 
   const onSearch = useCallback(
     (e) => {
@@ -62,7 +64,7 @@ function HistoryPage() {
           <button
             onClick={async () => {
               try {
-                await downloadHistoryCsv({ status, q })
+                await downloadHistoryCsv(clinicId, { status, q })
                 pushToast({ title: 'Export CSV', description: 'queue-history.csv diunduh', type: 'success' })
               } catch (err) {
                 pushToast({ title: 'Export Gagal', description: err.message, type: 'error' })

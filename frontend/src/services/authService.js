@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { getToken, clearToken } from '../lib/auth'
+import { API_BASE } from '../config'
 
-const API = '/api'
+const API = API_BASE
 
 export async function login(email, password) {
   const res = await axios.post(`${API}/auth/login`, { email, password })

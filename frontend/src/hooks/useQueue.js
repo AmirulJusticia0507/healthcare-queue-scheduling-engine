@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as queueService from '../services/queueService'
 import { getToken } from '../lib/auth'
+import { API_BASE } from '../config'
 
 export function useQueue({ clinicId, live = false } = {}) {
   const [queue, setQueue] = useState([])
@@ -29,7 +30,7 @@ export function useQueue({ clinicId, live = false } = {}) {
   useEffect(() => {
     if (!live) return
     const token = getToken()
-    const url = `/api/queue/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`
+    const url = `${API_BASE}/queue/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`
     const source = new EventSource(url)
     source.addEventListener('queue_update', () => load())
     source.onerror = () => {
