@@ -16,6 +16,7 @@ const dnaRoutes = require('./modules/dna/dna.routes');
 const { verifyToken } = require('./middleware/auth');
 const { getCurrentPublic, streamPublic } = require('./modules/queue/queue.controller');
 const doctorService = require('./modules/doctors/doctor.service');
+const queueService = require('./modules/queue/queue.service');
 
 // Router publik (tanpa auth) untuk TV/display
 const publicRouter = express.Router();
@@ -31,9 +32,10 @@ app.use('/api/auth', authRoutes);
 // Public queue endpoints untuk TV/display
 app.use('/api/queue', publicRouter);
 
-// Public read-only doctor endpoints (untuk integrasi DNA system)
-const publicDoctorRouter = express.Router();
-publicDoctorRouter.get('/', async (req, res) => {
+// === PUBLIC INTEGRATION ROUTES (untuk DNA system, tanpa auth) ===
+
+// List all doctors
+app.get('/api/doctors', async (req, res) => {
   try {
     const clinicId = Number(req.query.clinic) || null;
     const doctors = clinicId
@@ -44,7 +46,9 @@ publicDoctorRouter.get('/', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-publicDoctorRouter.get('/external/:externalId', async (req, res) => {
+
+// Get doctor by external_id
+app.get('/api/doctors/external/:externalId', async (req, res) => {
   try {
     const doctor = await doctorService.getDoctorByExternalId(req.params.externalId);
     if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
@@ -53,7 +57,9 @@ publicDoctorRouter.get('/external/:externalId', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-publicDoctorRouter.get('/:id', async (req, res) => {
+
+// Get doctor by ID
+app.get('/api/doctors/:id', async (req, res) => {
   try {
     const doctor = await doctorService.getDoctorById(req.params.id);
     if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
@@ -62,9 +68,34 @@ publicDoctorRouter.get('/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-app.use('/api/doctors', publicDoctorRouter);
 
-// Protected routes (write operations)
+// Find queue entry by patient external_id
+app.get('/api/doctors/queue/external/:externalId', async (req, res) => {
+  try {
+    const entry = await queueService.getPatientByExternalId(req.params.externalId);
+    if (!entry) return res.status(404).json({ error: 'Queue entry not found for this patient' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Assign doctor to queue entry (for DNA system integration)
+app.patch('/api/doctors/assign/:patientId', async (req, res) => {
+  try {
+    const { doctorId } = req.body;
+    if (!doctorId) return res.status(400).json({ error: 'doctorId required' });
+    const entry = await queueService.setDoctorId(req.params.patientId, doctorId);
+    if (!entry) return res.status(404).json({ error: 'Patient not found' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// === PROTECTED ROUTES (require JWT) ===
+
+// Protected doctor routes (write: create)
 app.use('/api/doctors', verifyToken, doctorRoutes);
 app.use('/api/queue', verifyToken, queueRoutes);
 app.use('/api/dna', verifyToken, dnaRoutes);
