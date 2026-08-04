@@ -64,11 +64,11 @@ async function getWaitingQueue(clinicId) {
   return res.rows;
 }
 
-async function addQueueEntry(patientName, clinicId) {
+async function addQueueEntry(patientName, clinicId, patient_external_id = null) {
   clinicId = clinicId || DEFAULT_CLINIC;
   const res = await pool.query(
-    'INSERT INTO queue_entries(patient_name, clinic_id) VALUES($1, $2) RETURNING *',
-    [patientName, clinicId]
+    'INSERT INTO queue_entries(patient_name, clinic_id, patient_external_id) VALUES($1, $2, $3) RETURNING *',
+    [patientName, clinicId, patient_external_id]
   );
   await recalculateAvailability(clinicId);
   publish('queue_update', { action: 'join', clinicId });
@@ -96,6 +96,41 @@ async function recallPatient(patientId) {
   const result = await setPatientStatus(patientId, STATUS_WAITING);
   publish('queue_update', { action: 'recall', id: patientId });
   return result;
+}
+
+async function setPatientExternalId(patientId, externalId) {
+  const res = await pool.query(
+    'UPDATE queue_entries SET patient_external_id = $1 WHERE id = $2 RETURNING *',
+    [externalId, patientId]
+  );
+  if (res.rows.length > 0) {
+    publish('queue_update', { action: 'update_external_id', id: patientId, externalId });
+  }
+  return res.rows[0];
+}
+
+async function setClinicalNotes(patientId, notes) {
+  const res = await pool.query(
+    'UPDATE queue_entries SET clinical_notes = $1 WHERE id = $2 RETURNING *',
+    [notes, patientId]
+  );
+  if (res.rows.length > 0) {
+    publish('queue_update', { action: 'update_notes', id: patientId });
+  }
+  return res.rows[0];
+}
+
+async function getPatientByExternalId(externalId, clinicId = DEFAULT_CLINIC) {
+  const res = await pool.query(
+    'SELECT * FROM queue_entries WHERE patient_external_id = $1 AND clinic_id = $2',
+    [externalId, clinicId]
+  );
+  return res.rows[0];
+}
+
+async function getPatient(id) {
+  const res = await pool.query('SELECT * FROM queue_entries WHERE id = $1', [id]);
+  return res.rows[0];
 }
 
 /**
@@ -179,6 +214,10 @@ module.exports = {
   addQueueEntry,
   skipPatient,
   recallPatient,
+  setPatientExternalId,
+  setClinicalNotes,
+  getPatientByExternalId,
+  getPatient,
   clinicOf,
   DEFAULT_CLINIC,
 };

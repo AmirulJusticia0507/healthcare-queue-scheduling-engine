@@ -16,10 +16,10 @@ async function getQueue(req, res) {
 
 async function joinQueue(req, res) {
   try {
-    const { patientName, clinic_id } = req.body;
+    const { patientName, clinic_id, patient_external_id } = req.body;
     const clinicId = Number(clinic_id) || DEFAULT_CLINIC;
 
-    const entry = await queueService.addQueueEntry(patientName, clinicId);
+    const entry = await queueService.addQueueEntry(patientName, clinicId, patient_external_id);
 
     const queue = await queueService.getQueueEntries(clinicId);
     const patientWithEstimate = queue.find((p) => p.id === entry.id);
@@ -59,6 +59,51 @@ async function recallPatient(req, res) {
     if (!entry) {
       return res.status(404).json({ error: 'Patient not found' });
     }
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function setPatientExternalId(req, res) {
+  try {
+    const { externalId } = req.body;
+    if (!externalId) return res.status(400).json({ error: 'externalId required' });
+    const entry = await queueService.setPatientExternalId(req.params.id, externalId);
+    if (!entry) return res.status(404).json({ error: 'Patient not found' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function setClinicalNotes(req, res) {
+  try {
+    const { notes } = req.body;
+    const entry = await queueService.setClinicalNotes(req.params.id, notes ?? '');
+    if (!entry) return res.status(404).json({ error: 'Patient not found' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getPatientByExternalId(req, res) {
+  try {
+    const { externalId } = req.params;
+    const clinicId = clinicOf(req);
+    const entry = await queueService.getPatientByExternalId(externalId, clinicId);
+    if (!entry) return res.status(404).json({ error: 'Patient not found' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getPatient(req, res) {
+  try {
+    const entry = await queueService.getPatient(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Patient not found' });
     res.json(entry);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -174,6 +219,10 @@ module.exports = {
   joinQueue,
   skipPatient,
   recallPatient,
+  setPatientExternalId,
+  setClinicalNotes,
+  getPatientByExternalId,
+  getPatient,
   getHistory,
   exportHistoryCsv,
   getCurrentPublic,

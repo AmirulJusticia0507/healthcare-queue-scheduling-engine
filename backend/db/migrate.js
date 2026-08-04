@@ -43,6 +43,24 @@ async function up() {
     await pool.query('UPDATE queue_entries SET clinic_id = $1 WHERE clinic_id IS NULL', [clinicId]);
     console.log('Backfilled queue_entries clinic_id');
   }
+
+  // patient_external_id for DNA bridge
+  const extCols = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name='queue_entries' AND column_name='patient_external_id'"
+  );
+  if (extCols.rows.length === 0) {
+    await pool.query(`ALTER TABLE queue_entries ADD COLUMN patient_external_id VARCHAR(255)`);
+    console.log('Added patient_external_id to queue_entries');
+  }
+
+  // clinical_notes for doctor notes
+  const notesCols = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name='queue_entries' AND column_name='clinical_notes'"
+  );
+  if (notesCols.rows.length === 0) {
+    await pool.query(`ALTER TABLE queue_entries ADD COLUMN clinical_notes TEXT`);
+    console.log('Added clinical_notes to queue_entries');
+  }
 }
 
 up()

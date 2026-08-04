@@ -12,7 +12,7 @@ function formatTime(ms) {
 const btn =
   'inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border transition-colors disabled:opacity-50'
 
-function QueueTable({ queue, loading, onSkip, onRecall }) {
+function QueueTable({ queue, loading, onSkip, onRecall, onRowClick }) {
   const [skipTarget, setSkipTarget] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -81,7 +81,7 @@ function QueueTable({ queue, loading, onSkip, onRecall }) {
               </tr>
             ) : (
               queue.map((p, idx) => (
-                <tr key={p.id} className="border-b border-gray-100 last:border-0">
+                <tr key={p.id} className="border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50" onClick={() => onRowClick?.(p)}>
                   <td className="px-4 py-2">{idx + 1}</td>
                   <td className="px-4 py-2 font-medium">{p.patient_name}</td>
                   <td className="px-4 py-2">

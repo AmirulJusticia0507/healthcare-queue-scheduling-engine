@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS doctors (
 CREATE TABLE IF NOT EXISTS queue_entries (
   id SERIAL PRIMARY KEY,
   patient_name VARCHAR(255) NOT NULL,
+  patient_external_id VARCHAR(255), -- UUID from DNA system
+  clinical_notes TEXT, -- Doctor's clinical notes
   status VARCHAR(20) NOT NULL DEFAULT 'waiting',
   -- status values: waiting | skipped | called | done
   joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

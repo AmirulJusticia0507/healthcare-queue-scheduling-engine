@@ -48,6 +48,16 @@ export async function recallPatient(id) {
   return res.data
 }
 
+export async function getPatient(id) {
+  const res = await axios.get(`${API}/queue/${id}`)
+  return res.data
+}
+
+export async function setClinicalNotes(id, notes) {
+  const res = await axios.patch(`${API}/queue/${id}/notes`, { notes })
+  return res.data
+}
+
 export function printTicket(entry, number) {
   const doctor = entry?.assignedDoctor
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Struk Antrian</title>

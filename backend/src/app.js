@@ -12,6 +12,7 @@ const authRoutes = require('./modules/auth/auth.routes');
 const clinicRoutes = require('./modules/clinics/clinic.routes');
 const doctorRoutes = require('./modules/doctors/doctor.routes');
 const queueRoutes = require('./modules/queue/queue.routes');
+const dnaRoutes = require('./modules/dna/dna.routes');
 const { verifyToken } = require('./middleware/auth');
 const { getCurrentPublic, streamPublic } = require('./modules/queue/queue.controller');
 
@@ -32,5 +33,6 @@ app.use('/api/queue', publicRouter);
 // Protected routes
 app.use('/api/doctors', verifyToken, doctorRoutes);
 app.use('/api/queue', verifyToken, queueRoutes);
+app.use('/api/dna', verifyToken, dnaRoutes);
 
 module.exports = app;

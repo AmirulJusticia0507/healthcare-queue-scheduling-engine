@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useQueue } from '../hooks/useQueue'
 import { useClinic } from '../contexts/ClinicContext'
 import QueueTable from '../components/QueueTable'
 import JoinQueueForm from '../components/JoinQueueForm'
+import ClinicalNotes from '../components/ClinicalNotes'
+import { DnaAnalysisCard } from '../components/DnaAnalysisCard'
 import { pushToast } from '../lib/toast'
 import * as queueService from '../services/queueService'
 
@@ -11,10 +14,11 @@ const btn =
 function QueuePage() {
   const { clinicId } = useClinic()
   const { queue, loading, error, addPatient, reload, skip, recall } = useQueue({ clinicId, live: true })
+  const [selectedPatient, setSelectedPatient] = useState(null)
 
-  const handleAddPatient = async (patientName) => {
+  const handleAddPatient = async (patientName, externalId) => {
     try {
-      const result = await addPatient(patientName)
+      const result = await addPatient(patientName, externalId)
       await reload()
       const idx = queue.findIndex((p) => p.id === result?.entry?.id)
       const number = idx >= 0 ? idx + 1 : queue.length + 1
@@ -31,6 +35,10 @@ function QueuePage() {
         type: 'error',
       })
     }
+  }
+
+  const handleRowClick = (patient) => {
+    setSelectedPatient(selectedPatient?.id === patient.id ? null : patient)
   }
 
   const handleSkip = async (id) => {
@@ -88,7 +96,21 @@ function QueuePage() {
         loading={loading}
         onSkip={handleSkip}
         onRecall={handleRecall}
+        onRowClick={handleRowClick}
       />
+
+      {selectedPatient && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Detail Pasien: {selectedPatient.patient_name}</h2>
+            <button onClick={() => setSelectedPatient(null)} className="text-sm text-gray-500 hover:text-gray-700">Tutup</button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <DnaAnalysisCard externalId={selectedPatient.patient_external_id} />
+            <ClinicalNotes patientId={selectedPatient.id} onClose={() => setSelectedPatient(null)} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

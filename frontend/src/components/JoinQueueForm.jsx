@@ -5,12 +5,14 @@ const inputClass =
 
 function JoinQueueForm({ onSubmit, loading }) {
   const [patientName, setPatientName] = useState('')
+  const [externalId, setExternalId] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!patientName.trim()) return
-    await onSubmit(patientName.trim())
+    await onSubmit(patientName.trim(), externalId.trim() || undefined)
     setPatientName('')
+    setExternalId('')
   }
 
   return (
@@ -29,6 +31,19 @@ function JoinQueueForm({ onSubmit, loading }) {
           value={patientName}
           onChange={(e) => setPatientName(e.target.value)}
           placeholder="Nama pasien"
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label htmlFor="external-id" className="block text-sm font-medium text-gray-700 mb-1">
+          DNA External ID (opsional)
+        </label>
+        <input
+          id="external-id"
+          type="text"
+          value={externalId}
+          onChange={(e) => setExternalId(e.target.value)}
+          placeholder="UUID dari sistem DNA (mis. 550e8400-e29b-41d4-a716-446655440000)"
           className={inputClass}
         />
       </div>
