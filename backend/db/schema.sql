@@ -2,6 +2,20 @@
 
 -- CREATE DATABASE healthcare_queue_db;
 
+CREATE TABLE IF NOT EXISTS patients (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  date_of_birth DATE,
+  gender VARCHAR(20),
+  phone VARCHAR(50),
+  email VARCHAR(255),
+  address TEXT,
+  medical_record_number VARCHAR(100) UNIQUE,
+  external_id VARCHAR(255), -- UUID bridge to DNA system
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS doctors (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -14,7 +28,8 @@ CREATE TABLE IF NOT EXISTS doctors (
 CREATE TABLE IF NOT EXISTS queue_entries (
   id SERIAL PRIMARY KEY,
   patient_name VARCHAR(255) NOT NULL,
-  patient_external_id VARCHAR(255), -- UUID from DNA system
+  patient_id INT, -- FK to patients table
+  patient_external_id VARCHAR(255), -- UUID from DNA system (legacy, use patient_id instead)
   doctor_id INT, -- assigned doctor (persisted)
   clinical_notes TEXT, -- Doctor's clinical notes
   status VARCHAR(20) NOT NULL DEFAULT 'waiting',

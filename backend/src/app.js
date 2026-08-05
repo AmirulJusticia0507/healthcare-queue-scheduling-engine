@@ -11,6 +11,7 @@ app.use('/api', apiRateLimit);
 const authRoutes = require('./modules/auth/auth.routes');
 const clinicRoutes = require('./modules/clinics/clinic.routes');
 const doctorRoutes = require('./modules/doctors/doctor.routes');
+const patientRoutes = require('./modules/patients/patient.routes');
 const queueRoutes = require('./modules/queue/queue.routes');
 const dnaRoutes = require('./modules/dna/dna.routes');
 const { verifyToken } = require('./middleware/auth');
@@ -98,6 +99,7 @@ app.patch('/api/doctors/assign/:patientId', validateIntegrationKey, async (req, 
 
 // Protected doctor routes (write: create)
 app.use('/api/doctors', verifyToken, doctorRoutes);
+app.use('/api/patients', verifyToken, patientRoutes);
 app.use('/api/queue', verifyToken, queueRoutes);
 app.use('/api/dna', verifyToken, dnaRoutes);
 

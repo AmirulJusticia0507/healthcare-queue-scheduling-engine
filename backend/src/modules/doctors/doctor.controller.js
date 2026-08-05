@@ -31,8 +31,30 @@ async function addDoctor(req, res) {
   }
 }
 
+async function updateDoctor(req, res) {
+  try {
+    const doctor = await doctorService.updateDoctor(req.params.id, req.body);
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+    res.json(doctor);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function deleteDoctor(req, res) {
+  try {
+    const doctor = await doctorService.deleteDoctor(req.params.id);
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+    res.json({ message: 'Doctor deleted', doctor });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getDoctors,
   getDoctorByExternalId,
   addDoctor,
+  updateDoctor,
+  deleteDoctor,
 };

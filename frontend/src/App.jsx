@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage'
 import QueuePage from './pages/QueuePage'
 import HistoryPage from './pages/HistoryPage'
 import DoctorsPage from './pages/DoctorsPage'
+import PatientsPage from './pages/PatientsPage'
 
 function AppRoutes() {
   return (
@@ -20,6 +21,7 @@ function AppRoutes() {
         <Route path="/queue" element={<QueuePage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
+        <Route path="/patients" element={<PatientsPage />} />
       </Route>
     </Routes>
   )

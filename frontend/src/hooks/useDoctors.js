@@ -31,5 +31,21 @@ export function useDoctors(clinicId) {
     [load]
   )
 
-  return { doctors, loading, error, createDoctor }
+  const updateDoctor = useCallback(
+    async (id, data) => {
+      await doctorService.updateDoctor(id, data)
+      await load()
+    },
+    [load]
+  )
+
+  const removeDoctor = useCallback(
+    async (id) => {
+      await doctorService.deleteDoctor(id)
+      await load()
+    },
+    [load]
+  )
+
+  return { doctors, loading, error, createDoctor, updateDoctor, removeDoctor }
 }

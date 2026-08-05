@@ -79,6 +79,38 @@ async function up() {
     await pool.query(`ALTER TABLE doctors ADD COLUMN external_id VARCHAR(255)`);
     console.log('Added external_id to doctors');
   }
+
+  // patients table for patient management
+  const patientsExists = await pool.query(
+    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='patients')"
+  );
+  if (!patientsExists.rows[0].exists) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS patients (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        date_of_birth DATE,
+        gender VARCHAR(20),
+        phone VARCHAR(50),
+        email VARCHAR(255),
+        address TEXT,
+        medical_record_number VARCHAR(100) UNIQUE,
+        external_id VARCHAR(255),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('Created patients table');
+  }
+
+  // patient_id FK on queue_entries
+  const patientIdCols = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name='queue_entries' AND column_name='patient_id'"
+  );
+  if (patientIdCols.rows.length === 0) {
+    await pool.query(`ALTER TABLE queue_entries ADD COLUMN patient_id INT`);
+    console.log('Added patient_id to queue_entries');
+  }
 }
 
 up()

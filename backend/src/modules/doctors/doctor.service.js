@@ -34,9 +34,29 @@ async function createDoctor(name, avgConsultTime, clinicId, externalId = null) {
   return res.rows[0];
 }
 
+async function updateDoctor(id, { name, avgConsultTime, clinicId, externalId }) {
+  const fields = [];
+  const params = [];
+  if (name !== undefined) { params.push(name); fields.push(`name = $${params.length}`); }
+  if (avgConsultTime !== undefined) { params.push(avgConsultTime); fields.push(`avg_consult_time = $${params.length}`); }
+  if (clinicId !== undefined) { params.push(clinicId); fields.push(`clinic_id = $${params.length}`); }
+  if (externalId !== undefined) { params.push(externalId); fields.push(`external_id = $${params.length}`); }
+  if (fields.length === 0) return getDoctorById(id);
+  params.push(id);
+  const res = await pool.query(`UPDATE doctors SET ${fields.join(', ')} WHERE id = $${params.length} RETURNING *`, params);
+  return res.rows[0];
+}
+
+async function deleteDoctor(id) {
+  const res = await pool.query('DELETE FROM doctors WHERE id = $1 RETURNING *', [id]);
+  return res.rows[0];
+}
+
 module.exports = {
   getAllDoctors,
   getDoctorById,
   getDoctorByExternalId,
   createDoctor,
+  updateDoctor,
+  deleteDoctor,
 };

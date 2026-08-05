@@ -26,8 +26,9 @@ function ClinicSwitcher() {
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
   { path: '/queue', label: 'Antrian' },
-  { path: '/history', label: 'Riwayat' },
   { path: '/doctors', label: 'Dokter' },
+  { path: '/patients', label: 'Pasien' },
+  { path: '/history', label: 'Riwayat' },
 ]
 
 function Navbar() {

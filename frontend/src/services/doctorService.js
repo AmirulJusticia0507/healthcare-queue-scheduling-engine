@@ -11,3 +11,13 @@ export async function addDoctor(name, avgConsultTime, clinicId) {
   const res = await axios.post(`${API}/doctors`, { name, avgConsultTime, clinic_id: clinicId })
   return res.data
 }
+
+export async function updateDoctor(id, data) {
+  const res = await axios.put(`${API}/doctors/${id}`, data)
+  return res.data
+}
+
+export async function deleteDoctor(id) {
+  const res = await axios.delete(`${API}/doctors/${id}`)
+  return res.data
+}
