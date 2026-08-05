@@ -195,6 +195,32 @@ async function getHistory({ clinicId, status, page = 1, limit = 20, q } = {}) {
   };
 }
 
+async function getHistoryExcel({ clinicId, status, q } = {}) {
+  clinicId = clinicId || DEFAULT_CLINIC;
+  const where = ['clinic_id = $1'];
+  const params = [clinicId];
+  if (status) {
+    params.push(status);
+    where.push(`status = $${params.length}`);
+  }
+  if (q) {
+    params.push(`%${q}%`);
+    where.push(`patient_name ILIKE $${params.length}`);
+  }
+  const whereClause = `WHERE ${where.join(' AND ')}`;
+
+  const res = await pool.query(
+    `SELECT qe.id, qe.patient_name, qe.status, qe.joined_at, qe.created_at,
+            d.name AS doctor_name, p.medical_record_number, p.phone, p.email
+     FROM queue_entries qe
+     LEFT JOIN doctors d ON qe.doctor_id = d.id
+     LEFT JOIN patients p ON qe.patient_id = p.id
+     ${whereClause} ORDER BY qe.created_at ASC, qe.id ASC`,
+    params
+  );
+  return res.rows;
+}
+
 async function getHistoryCsv({ clinicId, status, q } = {}) {
   clinicId = clinicId || DEFAULT_CLINIC;
   const where = ['clinic_id = $1'];
@@ -225,12 +251,50 @@ async function getHistoryCsv({ clinicId, status, q } = {}) {
   return csv;
 }
 
+async function bulkAssignDoctor(patientIds, doctorId, clinicId) {
+  clinicId = clinicId || DEFAULT_CLINIC;
+  const results = [];
+  for (const id of patientIds) {
+    const res = await pool.query(
+      'UPDATE queue_entries SET doctor_id = $1 WHERE id = $2 AND clinic_id = $3 AND status = $4 RETURNING *',
+      [doctorId, id, clinicId, STATUS_WAITING]
+    );
+    if (res.rows.length > 0) results.push(res.rows[0]);
+  }
+  if (results.length > 0) {
+    await recalculateAvailability(clinicId);
+    publish('queue_update', { action: 'bulk_assign', clinicId, count: results.length });
+  }
+  return results;
+}
+
+async function bulkDelete(patientIds) {
+  const results = [];
+  for (const id of patientIds) {
+    const res = await pool.query('DELETE FROM queue_entries WHERE id = $1 RETURNING *', [id]);
+    if (res.rows.length > 0) results.push(res.rows[0]);
+  }
+  if (results.length > 0) publish('queue_update', { action: 'bulk_delete', count: results.length });
+  return results;
+}
+
+async function bulkSkip(patientIds) {
+  const results = [];
+  for (const id of patientIds) {
+    const res = await setPatientStatus(id, STATUS_SKIPPED);
+    if (res) results.push(res);
+  }
+  if (results.length > 0) publish('queue_update', { action: 'bulk_skip', count: results.length });
+  return results;
+}
+
 module.exports = {
   getQueueEntries,
   getWaitingQueue,
   getCurrentPublic: getQueueEntries,
   getHistory,
   getHistoryCsv,
+  getHistoryExcel,
   addQueueEntry,
   skipPatient,
   recallPatient,
@@ -239,6 +303,9 @@ module.exports = {
   setDoctorId,
   getPatientByExternalId,
   getPatient,
+  bulkAssignDoctor,
+  bulkDelete,
+  bulkSkip,
   clinicOf,
   DEFAULT_CLINIC,
 };

@@ -10,6 +10,10 @@ import QueuePage from './pages/QueuePage'
 import HistoryPage from './pages/HistoryPage'
 import DoctorsPage from './pages/DoctorsPage'
 import PatientsPage from './pages/PatientsPage'
+import ReportsPage from './pages/ReportsPage'
+import AuditPage from './pages/AuditPage'
+import NotificationsPage from './pages/NotificationsPage'
+import AppointmentsPage from './pages/AppointmentsPage'
 
 function AppRoutes() {
   return (
@@ -19,9 +23,13 @@ function AppRoutes() {
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/queue" element={<QueuePage />} />
-        <Route path="/history" element={<HistoryPage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
         <Route path="/patients" element={<PatientsPage />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/audit" element={<AuditPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
     </Routes>
   )

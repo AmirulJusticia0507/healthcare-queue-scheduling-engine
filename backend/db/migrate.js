@@ -111,6 +111,81 @@ async function up() {
     await pool.query(`ALTER TABLE queue_entries ADD COLUMN patient_id INT`);
     console.log('Added patient_id to queue_entries');
   }
+
+  // doctor_id column on users (for doctor role)
+  const userDoctorIdCols = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name='doctor_id'"
+  );
+  if (userDoctorIdCols.rows.length === 0) {
+    await pool.query('ALTER TABLE users ADD COLUMN doctor_id INT');
+    console.log('Added doctor_id to users');
+  }
+
+  // appointments table
+  const appointmentsExists = await pool.query(
+    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='appointments')"
+  );
+  if (!appointmentsExists.rows[0].exists) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS appointments (
+        id SERIAL PRIMARY KEY,
+        patient_id INT NOT NULL REFERENCES patients(id),
+        doctor_id INT NOT NULL REFERENCES doctors(id),
+        clinic_id INT NOT NULL DEFAULT ${clinicId},
+        appointment_date DATE NOT NULL,
+        appointment_time TIME NOT NULL,
+        reason TEXT,
+        notes TEXT,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments (appointment_date)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_appointments_doctor ON appointments (doctor_id)');
+    console.log('Created appointments table');
+  }
+
+  // audit_logs table
+  const auditExists = await pool.query(
+    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='audit_logs')"
+  );
+  if (!auditExists.rows[0].exists) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INT,
+        action VARCHAR(255) NOT NULL,
+        entity_type VARCHAR(100),
+        entity_id INT,
+        details TEXT,
+        ip_address VARCHAR(50),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs (entity_type, entity_id)');
+    console.log('Created audit_logs table');
+  }
+
+  // notifications table
+  const notifExists = await pool.query(
+    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='notifications')"
+  );
+  if (!notifExists.rows[0].exists) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        type VARCHAR(20) DEFAULT 'info',
+        link VARCHAR(255),
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read)');
+    console.log('Created notifications table');
+  }
 }
 
 up()

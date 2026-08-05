@@ -226,6 +226,75 @@ function stream(req, res) {
   });
 }
 
+async function exportHistoryExcel(req, res) {
+  try {
+    const { status, q } = req.query;
+    const clinicId = clinicOf(req);
+    const XLSX = require('xlsx');
+    const rows = await queueService.getHistoryExcel({ clinicId, status, q });
+    const data = rows.map(r => ({
+      ID: r.id,
+      'Nama Pasien': r.patient_name,
+      'No. RM': r.medical_record_number || '',
+      Status: r.status,
+      Dokter: r.doctor_name || '',
+      Telepon: r.phone || '',
+      Email: r.email || '',
+      'Waktu Masuk': r.joined_at,
+      'Waktu Dibuat': r.created_at,
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, 'Riwayat Antrian');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="queue-history.xlsx"');
+    res.status(200).send(buf);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function bulkAssignDoctor(req, res) {
+  try {
+    const { patientIds, doctorId } = req.body;
+    if (!Array.isArray(patientIds) || !patientIds.length || !doctorId) {
+      return res.status(400).json({ error: 'patientIds (array) and doctorId required' });
+    }
+    const clinicId = clinicOf(req);
+    const results = await queueService.bulkAssignDoctor(patientIds, doctorId, clinicId);
+    res.json({ updated: results.length, results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function bulkDelete(req, res) {
+  try {
+    const { patientIds } = req.body;
+    if (!Array.isArray(patientIds) || !patientIds.length) {
+      return res.status(400).json({ error: 'patientIds (array) required' });
+    }
+    const results = await queueService.bulkDelete(patientIds);
+    res.json({ deleted: results.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function bulkSkip(req, res) {
+  try {
+    const { patientIds } = req.body;
+    if (!Array.isArray(patientIds) || !patientIds.length) {
+      return res.status(400).json({ error: 'patientIds (array) required' });
+    }
+    const results = await queueService.bulkSkip(patientIds);
+    res.json({ skipped: results.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getQueue,
   joinQueue,
@@ -238,6 +307,10 @@ module.exports = {
   getPatient,
   getHistory,
   exportHistoryCsv,
+  exportHistoryExcel,
+  bulkAssignDoctor,
+  bulkDelete,
+  bulkSkip,
   getCurrentPublic,
   stream,
   streamPublic,

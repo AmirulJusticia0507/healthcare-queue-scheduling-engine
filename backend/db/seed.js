@@ -4,6 +4,7 @@ const pool = require('../src/config/database');
 const USERS = [
   { name: 'Admin', email: 'admin@health.id', password: 'admin123', role: 'admin' },
   { name: 'Staff', email: 'staff@health.id', password: 'staff123', role: 'staff' },
+  { name: 'Dr. Sari', email: 'dokter@health.id', password: 'dokter123', role: 'doctor' },
 ];
 
 const DOCTORS = [

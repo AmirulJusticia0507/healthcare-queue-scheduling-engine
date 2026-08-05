@@ -7,6 +7,10 @@ app.use(express.json());
 const { apiRateLimit } = require('./middleware/rateLimit');
 app.use('/api', apiRateLimit);
 
+// Audit middleware — logs all write operations
+const { auditMiddleware } = require('./middleware/audit');
+app.use('/api', auditMiddleware);
+
 // Import routes + middleware
 const authRoutes = require('./modules/auth/auth.routes');
 const clinicRoutes = require('./modules/clinics/clinic.routes');
@@ -14,6 +18,10 @@ const doctorRoutes = require('./modules/doctors/doctor.routes');
 const patientRoutes = require('./modules/patients/patient.routes');
 const queueRoutes = require('./modules/queue/queue.routes');
 const dnaRoutes = require('./modules/dna/dna.routes');
+const auditRoutes = require('./modules/audit/audit.routes');
+const notifRoutes = require('./modules/notifications/notification.routes');
+const appointmentRoutes = require('./modules/appointments/appointment.routes');
+const reportRoutes = require('./modules/reports/report.routes');
 const { verifyToken } = require('./middleware/auth');
 const { getCurrentPublic, streamPublic } = require('./modules/queue/queue.controller');
 const doctorService = require('./modules/doctors/doctor.service');
@@ -95,6 +103,33 @@ app.patch('/api/doctors/assign/:patientId', validateIntegrationKey, async (req, 
   }
 });
 
+// Lab results push from testDNA → clinical_notes (integration key)
+app.patch('/api/queue/:id/clinical-notes', validateIntegrationKey, async (req, res) => {
+  try {
+    const { notes } = req.body;
+    const entry = await queueService.setClinicalNotes(req.params.id, notes || '');
+    if (!entry) return res.status(404).json({ error: 'Queue entry not found' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Doctor schedule sync endpoint (for testDNA integration)
+app.get('/api/doctors/:id/schedule', validateIntegrationKey, async (req, res) => {
+  try {
+    const doctor = await doctorService.getDoctorById(req.params.id);
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+    res.json({
+      doctor,
+      available_at: doctor.available_at,
+      avg_consult_time: doctor.avg_consult_time,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // === PROTECTED ROUTES (require JWT) ===
 
 // Protected doctor routes (write: create)
@@ -102,5 +137,9 @@ app.use('/api/doctors', verifyToken, doctorRoutes);
 app.use('/api/patients', verifyToken, patientRoutes);
 app.use('/api/queue', verifyToken, queueRoutes);
 app.use('/api/dna', verifyToken, dnaRoutes);
+app.use('/api/audit', verifyToken, auditRoutes);
+app.use('/api/notifications', verifyToken, notifRoutes);
+app.use('/api/appointments', verifyToken, appointmentRoutes);
+app.use('/api/reports', verifyToken, reportRoutes);
 
 module.exports = app;

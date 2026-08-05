@@ -47,7 +47,8 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL, -- bcrypt hash
-  role VARCHAR(50) NOT NULL DEFAULT 'staff', -- admin | staff
+  role VARCHAR(50) NOT NULL DEFAULT 'staff', -- admin | staff | doctor
+  doctor_id INT, -- FK to doctors table (for doctor role)
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -60,6 +61,54 @@ CREATE TABLE IF NOT EXISTS clinics (
   code VARCHAR(50) UNIQUE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Appointments
+CREATE TABLE IF NOT EXISTS appointments (
+  id SERIAL PRIMARY KEY,
+  patient_id INT NOT NULL REFERENCES patients(id),
+  doctor_id INT NOT NULL REFERENCES doctors(id),
+  clinic_id INT NOT NULL DEFAULT 1,
+  appointment_date DATE NOT NULL,
+  appointment_time TIME NOT NULL,
+  reason TEXT,
+  notes TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  -- status values: pending | confirmed | completed | cancelled | no_show
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments (appointment_date);
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor ON appointments (doctor_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments (status);
+
+-- Audit Trail
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id SERIAL PRIMARY KEY,
+  user_id INT,
+  action VARCHAR(255) NOT NULL,
+  entity_type VARCHAR(100),
+  entity_id INT,
+  details TEXT,
+  ip_address VARCHAR(50),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs (entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs (user_id);
+
+-- Notifications
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  type VARCHAR(20) DEFAULT 'info', -- info | success | warning | error
+  link VARCHAR(255),
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read);
 
 -- Clinic scoping (added later via db/migrate.js; declared here for fresh builds)
 -- ALTER TABLE doctors ADD COLUMN clinic_id INT NOT NULL DEFAULT 1 REFERENCES clinics(id);

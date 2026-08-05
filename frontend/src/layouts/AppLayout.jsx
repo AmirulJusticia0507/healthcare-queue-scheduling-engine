@@ -28,7 +28,11 @@ const NAV_ITEMS = [
   { path: '/queue', label: 'Antrian' },
   { path: '/doctors', label: 'Dokter' },
   { path: '/patients', label: 'Pasien' },
+  { path: '/appointments', label: 'Janji Temu' },
+  { path: '/reports', label: 'Laporan' },
   { path: '/history', label: 'Riwayat' },
+  { path: '/audit', label: 'Audit Trail' },
+  { path: '/notifications', label: 'Notifikasi' },
 ]
 
 function Navbar() {
