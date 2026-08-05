@@ -2,6 +2,7 @@ import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
 import Toasts from '../components/Toasts'
 import { useAuth } from '../contexts/AuthContext'
 import { useClinic } from '../contexts/ClinicContext'
+import { useDarkMode } from '../hooks/useDarkMode'
 
 function ClinicSwitcher() {
   const { clinics, clinicId, switchClinic, loading } = useClinic()
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
 
 function Navbar() {
   const { user, logout } = useAuth()
+  const { isDark, toggle: toggleDark } = useDarkMode()
   return (
     <header className="bg-brand-600 text-white shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
@@ -54,6 +56,14 @@ function Navbar() {
             {user.role === 'admin' && (
               <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 rounded">admin</span>
             )}
+            <button
+              onClick={toggleDark}
+              className="px-2 py-1 text-[10px] font-medium rounded border border-white/30 hover:bg-white/10"
+              title={isDark ? 'Mode terang' : 'Mode gelap'}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? '\u2600' : '\u263E'}
+            </button>
             <RouterLink
               to="/tv"
               target="_blank"

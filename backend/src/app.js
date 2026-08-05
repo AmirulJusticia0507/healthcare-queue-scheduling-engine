@@ -1,7 +1,41 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
+const { requestLogger } = require('./middleware/logger');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('../config/swagger');
 
-app.use(express.json());
+// CORS hardening
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:3000').split(',');
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+}));
+
+app.use(express.json({ limit: '1mb' }));
+app.use(requestLogger);
+
+// Swagger docs
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  explorer: true,
+  customSiteTitle: 'Healthcare Queue API Docs',
+}));
+
+// Health check
+app.get('/health', async (req, res) => {
+  try {
+    const pool = require('./config/database');
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', service: 'healthcare-backend', db: 'connected', timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(503).json({ status: 'error', service: 'healthcare-backend', db: 'disconnected', error: err.message });
+  }
+});
 
 // Global rate-limit untuk seluruh /api (longga). Login pakai limiter ketat terpisah.
 const { apiRateLimit } = require('./middleware/rateLimit');
@@ -22,6 +56,7 @@ const auditRoutes = require('./modules/audit/audit.routes');
 const notifRoutes = require('./modules/notifications/notification.routes');
 const appointmentRoutes = require('./modules/appointments/appointment.routes');
 const reportRoutes = require('./modules/reports/report.routes');
+const webhookRoutes = require('./modules/webhooks/webhook.routes');
 const { verifyToken } = require('./middleware/auth');
 const { getCurrentPublic, streamPublic } = require('./modules/queue/queue.controller');
 const doctorService = require('./modules/doctors/doctor.service');
@@ -41,6 +76,24 @@ app.use('/api/auth', authRoutes);
 
 // Public queue endpoints untuk TV/display
 app.use('/api/queue', publicRouter);
+
+// Patient self-registration (public)
+const patientService = require('./modules/patients/patient.service');
+app.post('/api/register', async (req, res) => {
+  try {
+    const { name, dateOfBirth, gender, phone, email, address, medicalRecordNumber } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nama wajib diisi' });
+    const patient = await patientService.createPatient({
+      name, dateOfBirth, gender, phone, email, address, medicalRecordNumber,
+    });
+    res.status(201).json({ message: 'Registrasi berhasil', patient });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Nomor rekam medis sudah terdaftar' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // === PUBLIC INTEGRATION ROUTES (untuk DNA system, butuh API key) ===
 
@@ -141,5 +194,6 @@ app.use('/api/audit', verifyToken, auditRoutes);
 app.use('/api/notifications', verifyToken, notifRoutes);
 app.use('/api/appointments', verifyToken, appointmentRoutes);
 app.use('/api/reports', verifyToken, reportRoutes);
+app.use('/api/webhooks', verifyToken, webhookRoutes);
 
 module.exports = app;

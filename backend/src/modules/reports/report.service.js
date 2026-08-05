@@ -8,7 +8,7 @@ async function getQueueStats(clinicId) {
     pool.query("SELECT COUNT(*)::int AS n FROM queue_entries WHERE status = 'done' AND clinic_id = $1", [clinicId]),
     pool.query('SELECT COUNT(*)::int AS n FROM queue_entries WHERE clinic_id = $1', [clinicId]),
     pool.query(
-      `SELECT AVG(EXTRACT(EPOCH FROM (updated_at - joined_at)) / 60)::int AS avg_wait_minutes
+      `SELECT AVG(EXTRACT(EPOCH FROM (created_at - joined_at)) / 60)::int AS avg_wait_minutes
        FROM queue_entries WHERE status = 'done' AND clinic_id = $1`,
       [clinicId]
     ),

@@ -186,6 +186,37 @@ async function up() {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read)');
     console.log('Created notifications table');
   }
+
+  // webhooks table
+  const webhookExists = await pool.query(
+    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='webhooks')"
+  );
+  if (!webhookExists.rows[0].exists) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS webhooks (
+        id SERIAL PRIMARY KEY,
+        url VARCHAR(500) NOT NULL,
+        events TEXT[] DEFAULT '{*}',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('Created webhooks table');
+  }
+
+  // archived_queue_entries table for data retention
+  const archivedExists = await pool.query(
+    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='archived_queue_entries')"
+  );
+  if (!archivedExists.rows[0].exists) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS archived_queue_entries (
+        LIKE queue_entries INCLUDING ALL,
+        archived_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('Created archived_queue_entries table');
+  }
 }
 
 up()
