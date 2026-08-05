@@ -32,8 +32,14 @@ const NAV_ITEMS = [
   { path: '/appointments', label: 'Janji Temu' },
   { path: '/reports', label: 'Laporan' },
   { path: '/history', label: 'Riwayat' },
-  { path: '/audit', label: 'Audit Trail' },
   { path: '/notifications', label: 'Notifikasi' },
+  { path: '/profile', label: 'Profil' },
+]
+
+const ADMIN_ITEMS = [
+  { path: '/users', label: 'User Management' },
+  { path: '/audit', label: 'Audit Trail' },
+  { path: '/login-history', label: 'Riwayat Login' },
 ]
 
 function Navbar() {
@@ -89,6 +95,8 @@ function Navbar() {
 
 function Sidebar() {
   const location = useLocation()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
 
   return (
     <nav className="w-full md:w-56 md:shrink-0 bg-white border-b md:border-b-0 md:border-r border-gray-200 p-3 flex md:flex-col gap-1 flex-wrap">
@@ -109,6 +117,28 @@ function Sidebar() {
           </RouterLink>
         )
       })}
+      {isAdmin && (
+        <>
+          <div className="my-2 border-t border-gray-200" />
+          <p className="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Admin</p>
+          {ADMIN_ITEMS.map((item) => {
+            const active = location.pathname.startsWith(item.path)
+            return (
+              <RouterLink
+                key={item.path}
+                to={item.path}
+                className={`px-3 py-2 rounded-md text-sm font-medium border-l-[3px] ${
+                  active
+                    ? 'bg-amber-50 text-amber-700 border-amber-500'
+                    : 'text-gray-600 border-transparent hover:bg-amber-50 hover:text-amber-700'
+                }`}
+              >
+                {item.label}
+              </RouterLink>
+            )
+          })}
+        </>
+      )}
     </nav>
   )
 }

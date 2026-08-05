@@ -217,6 +217,26 @@ async function up() {
     `);
     console.log('Created archived_queue_entries table');
   }
+
+  // login_logs table
+  const loginLogsExists = await pool.query(
+    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='login_logs')"
+  );
+  if (!loginLogsExists.rows[0].exists) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS login_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INT,
+        email VARCHAR(255),
+        ip_address VARCHAR(50),
+        success BOOLEAN DEFAULT TRUE,
+        user_agent TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_login_logs_user ON login_logs (user_id)');
+    console.log('Created login_logs table');
+  }
 }
 
 up()
