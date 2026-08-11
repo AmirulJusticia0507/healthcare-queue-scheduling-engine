@@ -4,8 +4,8 @@ import { API_BASE } from '../config'
 
 const API = API_BASE
 
-export async function login(email, password) {
-  const res = await axios.post(`${API}/auth/login`, { email, password })
+export async function login(email, password, captchaToken) {
+  const res = await axios.post(`${API}/auth/login`, { email, password, captchaToken })
   return res.data
 }
 

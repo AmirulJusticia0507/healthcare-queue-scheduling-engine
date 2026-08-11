@@ -44,8 +44,8 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const login = async (email, password) => {
-    const data = await loginApi(email, password)
+  const login = async (email, password, captchaToken) => {
+    const data = await loginApi(email, password, captchaToken)
     setToken(data.token)
     setUser(data.user)
     navigate('/', { replace: true })

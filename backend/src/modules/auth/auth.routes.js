@@ -4,9 +4,10 @@ const authController = require('./auth.controller');
 const { verifyToken } = require('../../middleware/auth');
 const { authorize } = require('../../middleware/role');
 const { loginRateLimit } = require('../../middleware/rateLimit');
+const { verifyCaptcha } = require('../../middleware/captcha');
 
 // Public
-router.post('/login', loginRateLimit, authController.login);
+router.post('/login', loginRateLimit, verifyCaptcha, authController.login);
 
 // Authenticated (any role)
 router.get('/me', verifyToken, authController.whoami);
