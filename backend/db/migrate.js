@@ -1,6 +1,13 @@
+const fs = require('fs');
+const path = require('path');
 const pool = require('../src/config/database');
 
 async function up() {
+  // Terapkan skema dasar (idempotent) lebih dulu. Tanpa ini, ALTER TABLE
+  // di bawah akan gagal karena tabel doctors/queue_entries/users belum ada.
+  const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+  await pool.query(schema);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS clinics (
       id SERIAL PRIMARY KEY,
