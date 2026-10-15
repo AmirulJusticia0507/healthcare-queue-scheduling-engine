@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const logger = require('../../utils/logger');
+const logger = require('./logger');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.ethereal.email',

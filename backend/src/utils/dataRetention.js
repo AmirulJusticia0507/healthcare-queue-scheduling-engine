@@ -1,5 +1,5 @@
-const pool = require('../../config/database');
-const logger = require('../../utils/logger');
+const pool = require('../config/database');
+const logger = require('./logger');
 
 /**
  * Archive queue entries older than retentionDays (default 90 days).

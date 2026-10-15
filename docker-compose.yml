@@ -31,6 +31,7 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-healthcare_queue_db}
+      CAPTCHA_ENABLED: ${CAPTCHA_ENABLED:-true}
     ports:
       - "5000:5000"
     command: sh -c "node db/migrate.js && node db/seed.js && node src/server.js"

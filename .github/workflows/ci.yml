@@ -24,6 +24,9 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     needs: frontend
+    env:
+      # Matikan CAPTCHA untuk smoke test (layanan captcha eksternal tidak tersedia di CI)
+      CAPTCHA_ENABLED: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3

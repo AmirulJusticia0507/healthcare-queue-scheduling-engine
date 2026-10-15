@@ -1,4 +1,4 @@
-const auditService = require('./audit.service');
+const auditService = require('../modules/audit/audit.service');
 
 /**
  * Audit middleware — logs every write operation (POST, PUT, PATCH, DELETE).

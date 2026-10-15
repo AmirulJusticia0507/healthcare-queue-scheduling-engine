@@ -4,6 +4,9 @@
 const CAPTCHA_API_ENDPOINT = process.env.CAPTCHA_API_ENDPOINT || 'https://spl.jogjaprov.go.id/captcha/79fb58190a/'
 
 async function verifyCaptcha(req, res, next) {
+  // Bisa dimatikan lewat env untuk lingkungan test/CI (default: aktif).
+  if (process.env.CAPTCHA_ENABLED === 'false') return next()
+
   const token = req.body?.captchaToken
 
   if (!token) {
